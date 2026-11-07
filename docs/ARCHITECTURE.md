@@ -1,4 +1,4 @@
-# Architecture (Phase 1: Foundation)
+# Architecture (Phases 1–2: Foundation, Candidate core)
 
 ## Stack
 Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind 3 · lucide-react · mysql2 · nodemailer.
@@ -60,6 +60,44 @@ English-only by design.
 | `lib/server/http.ts` | `lib/server/auth.ts` (`sameOrigin`, cookies) | one `guard()` for CSRF + roles + limits |
 | `next.config.mjs`, `app/robots.ts` | same files | private-route list for this product |
 | `env-settings-example.txt` | same file | rewritten for this product |
+
+## Phase 2: Candidate core
+- **Vacancy model** (`types/index.ts` `Job`): school vacancies and government notices share one model;
+  `applyMode` is `platform` (apply here) or `external` ("Apply on official site" + track it). A vacancy is
+  public only when published and either a government notice or from a *verified* school (`lib/server/catalog.ts`).
+- **Search** (`lib/jobs/filters.ts`, `app/jobs/page.tsx`): readable URLs with master-data codes
+  (`/jobs?board=CBSE&post=PGT&state=AP`), full-text over title, school, place and the English/Hindi names of
+  every linked item, facet counts that ignore their own filter, salary / closing-date / distance filters
+  ("Near me" uses the browser's location against the school's coordinates), six sort orders. The filter form
+  is a plain GET form, so it works without JavaScript.
+- **Job page** (`app/jobs/[id]`): server-rendered with schema.org `JobPosting`, apply panel, save, track,
+  WhatsApp share, and "Why this match?".
+- **Match score** (`lib/jobs/match.ts`): six weighted parts from Master data → Match-score weights; capped at
+  `MANDATORY_CAP` when a required qualification or TET is missing or expired; reasons are i18n keys. Shown only
+  when the candidate gave matching consent.
+- **Profile** (`lib/server/profile.ts`): every field cleaned on the server; unknown master-data ids dropped;
+  completeness meter; child-safety section (police verification, dated self-declaration); discoverable toggle
+  (needs matching consent).
+- **Documents** (`lib/server/documents.ts`, `lib/server/scan.ts`): magic-byte type check, size limits, PDF
+  script/embedded-file check, optional ClamAV, served only via 15-minute signed URLs **and** a session that may
+  see them (owner, admin, or staff of a school the candidate applied to).
+- **Applications** (`lib/server/applications.ts`): open + platform + one per vacancy + required screening
+  answers + minimum profile; withdraw only while Applied/Screening; applying also adds the vacancy to the tracker.
+- **Tracker** (`lib/server/tracker.ts`): this site's vacancies and jobs from other sites, by last date.
+- **Job alerts** (`lib/server/alerts.ts`, `instrumentation.ts`): up to 10, instant / daily / weekly, each vacancy
+  sent once, first run silent, emails on the `alerts` list with unsubscribe; run every 10 minutes inside the server.
+- **DPDP** (`lib/server/privacy.ts`, `/account#privacy`): download my data (JSON), withdraw/give matching
+  consent, email preferences, erase account (documents deleted, audit entries anonymised).
+- **Sample data**: `npm run seed:demo` (local file store only) + `TST_SHOW_DEMO=1`; `-- --clear` removes it.
+
+Not in Phase 2 (still to schedule): CV import, resume checker and builder (spec §4.3), interview booking and
+demo-video links (Phase 4), interview preparation (§4.10), offer letters (Phase 4).
+
+| Phase 2 file | Came from AcadeXMatch | Changes |
+|---|---|---|
+| `lib/server/alerts.ts` | `lib/server/jobAlerts.ts` | school filters, mailing-list unsubscribe, testable `collectDue` |
+| `app/api/candidate/documents`, `lib/server/documents.ts` | `app/api/documents/route.ts`, `lib/documents.ts` | signed URLs, scan hook, school-specific categories |
+| `lib/jobs/filters.ts` | idea of `lib/jobFilter.ts` | rewritten for school facets, distance and Hindi search |
 
 ## Next phases
 2 Candidate core · 3 School core · 4 Hiring tools · 5 Money · 6 Government notices & growth · 7 Hardening

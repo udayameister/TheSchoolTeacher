@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/server/http';
 import { ROLES } from '@/types';
 import { ChangePassword, SignOutOthers } from '@/components/account/AccountForms';
 import ResendVerification from '@/components/account/ResendVerification';
+import { EmailPreferences, PrivacyTools } from '@/components/account/PrivacyTools';
 
 export const metadata = { title: 'My account', robots: { index: false } };
 
@@ -32,10 +33,14 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <h2 className="mb-3 text-lg font-bold">{t('account.security')}</h2>
         <SignOutOthers />
       </section>
-      {user.role === 'candidate' && (
-        <section className="card">
-          <h2 className="text-lg font-bold">{t('account.privacy')}</h2>
-          <p className="mt-2 text-ink-soft">{t('account.privacyText')}</p>
+      <section className="card scroll-mt-4" id="email">
+        <h2 className="mb-3 text-lg font-bold">{t('privacy.emailTitle')}</h2>
+        <EmailPreferences unsubscribed={user.unsubscribed || []} candidate={user.role === 'candidate'} />
+      </section>
+      {user.role !== 'platform_admin' && (
+        <section className="card scroll-mt-4" id="privacy">
+          <h2 className="mb-3 text-lg font-bold">{t('account.privacy')}</h2>
+          <PrivacyTools matching={user.consents.some(c => c.purpose === 'matching' && !c.withdrawnAt)} hasPassword={!!user.passwordHash} candidate={user.role === 'candidate'} />
         </section>
       )}
     </div>

@@ -15,7 +15,7 @@ for (const k of ['DB_HOST', 'SMTP_HOST', 'SMTP_USER', 'SMTP_PASS', 'EMAIL_API', 
 
 (async () => {
   const { run } = await import('./harness');
-  for (const f of ['security', 'store', 'masterData', 'auth', 'otp', 'mailer', 'guards', 'i18n']) await import(`./${f}.test`);
+  for (const f of ['security', 'store', 'masterData', 'auth', 'otp', 'mailer', 'guards', 'i18n', 'search', 'candidate']) await import(`./${f}.test`);
   const failed = await run();
   rmSync(dir, { recursive: true, force: true });
   process.exit(failed ? 1 : 0);

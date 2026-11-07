@@ -4,13 +4,23 @@ import { getT } from '@/lib/i18n/server';
 import { itemName } from '@/lib/i18n/translate';
 import { withDb } from '@/lib/server/db';
 import { listMaster } from '@/lib/server/masterData';
+import { lookupOf, publicJobs } from '@/lib/server/catalog';
+import { isPast } from '@/lib/jobs/dates';
+import { deadlineLabel, placeLabel } from '@/lib/jobs/display';
 
 export default async function HomePage() {
   const { t, locale } = await getT();
-  const { boards, states } = await withDb(db => ({
-    boards: listMaster(db, 'boards').filter(b => b.meta.scope !== 'state' && b.code !== 'OTHER'),
-    states: listMaster(db, 'states'),
-  }));
+  const { boards, states, latest, notices, lookup } = await withDb(db => {
+    const open = publicJobs(db).filter(j => j.status === 'published' && !isPast(j.lastDate))
+      .sort((a, b) => (b.publishedAt || b.createdAt).localeCompare(a.publishedAt || a.createdAt));
+    return {
+      boards: listMaster(db, 'boards').filter(b => b.meta.scope !== 'state' && b.code !== 'OTHER'),
+      states: listMaster(db, 'states'),
+      latest: open.filter(j => j.kind === 'school').slice(0, 6),
+      notices: open.filter(j => j.kind === 'government').slice(0, 4),
+      lookup: lookupOf(db),
+    };
+  });
   const faqs = [1, 2, 3, 4].map(n => ({ q: t(`home.faq${n}q`), a: t(`home.faq${n}a`) }));
 
   return (
@@ -25,8 +35,8 @@ export default async function HomePage() {
               <input id="q" name="q" className="input" placeholder={t('home.searchPlaceholder')} autoComplete="off" />
             </div>
             <div>
-              <label htmlFor="district" className="label">{t('home.districtLabel')}</label>
-              <input id="district" name="district" className="input" placeholder={t('home.districtPlaceholder')} autoComplete="address-level2" />
+              <label htmlFor="place" className="label">{t('home.districtLabel')}</label>
+              <input id="place" name="place" className="input" placeholder={t('home.districtPlaceholder')} autoComplete="address-level2" />
             </div>
             <button className="btn-primary" type="submit"><Search size={18} aria-hidden="true" />{t('home.searchButton')}</button>
           </form>
@@ -51,7 +61,10 @@ export default async function HomePage() {
         <div className="container-page flex flex-col gap-2 py-4 sm:flex-row sm:items-start">
           <h2 className="flex shrink-0 items-center gap-2 text-base font-bold text-marigold-800"><Landmark size={18} aria-hidden="true" />{t('home.govtStrip')}</h2>
           <div className="text-sm text-ink-soft">
-            <p>{t('home.govtEmpty')}</p>
+            {notices.length ? (
+              <ul className="space-y-1">{notices.map(n => <li key={n.id}><Link href={`/jobs/${n.id}`} className="font-semibold">{n.title}</Link> <span className="text-ink-muted">· {n.orgName} · {deadlineLabel(n.lastDate, t, locale).text}</span></li>)}
+                <li><Link href="/jobs?type=government" className="font-semibold">{t('home.allNotices')}</Link></li></ul>
+            ) : <p>{t('home.govtEmpty')}</p>}
             <p className="mt-1 text-xs">{t('home.govtStripNote')}</p>
           </div>
         </div>
@@ -60,7 +73,13 @@ export default async function HomePage() {
       <div className="container-page grid gap-6 py-10 lg:grid-cols-2">
         <section className="card" aria-labelledby="latest">
           <h2 id="latest" className="text-xl font-bold">{t('home.latestJobs')}</h2>
-          <p className="mt-3 text-ink-soft">{t('home.latestEmpty')}</p>
+          {latest.length ? (
+            <ul className="mt-3 divide-y divide-line">{latest.map(j => (
+              <li key={j.id} className="py-2"><Link href={`/jobs/${j.id}`} className="font-semibold">{j.title}</Link>
+                <span className="block text-sm text-ink-muted">{j.orgName} · {placeLabel(j, lookup, locale)} · {deadlineLabel(j.lastDate, t, locale).text}</span></li>
+            ))}</ul>
+          ) : <p className="mt-3 text-ink-soft">{t('home.latestEmpty')}</p>}
+          <Link href="/jobs" className="mt-3 inline-block text-sm font-semibold">{t('home.allJobs')}</Link>
         </section>
         <section className="card" aria-labelledby="events">
           <h2 id="events" className="text-xl font-bold">{t('home.events')}</h2>

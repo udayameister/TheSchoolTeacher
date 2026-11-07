@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 import { openStore, type Db } from './persist';
-import type { AuditEntry, MasterItem, MasterKind, OtpChallenge, OutboxItem, Session, TokenRecord, UserAccount } from '@/types';
+import type { Application, AuditEntry, CandidateProfile, Job, JobAlert, MasterItem, MasterKind, OtpChallenge, OutboxItem, SavedJob, School, Session, StoredDocument, TokenRecord, TrackedJob, UserAccount } from '@/types';
 import { seedMasterData } from '@/lib/masterData/seed';
 
 /*
@@ -20,6 +20,18 @@ export interface Collections {
   /** "<list>:<email>" pairs for addresses without an account that unsubscribed (e.g. school outreach). */
   suppressed: string[];
   master: Partial<Record<MasterKind, MasterItem[]>>;
+  schools: School[];
+  jobs: Job[];
+  profiles: Record<string, CandidateProfile>;
+  documents: StoredDocument[];
+  applications: Application[];
+  savedJobs: SavedJob[];
+  tracked: TrackedJob[];
+  alerts: JobAlert[];
+  /** Per alert: vacancies already sent and when it last ran (server-only bookkeeping). */
+  /** View counts per vacancy (kept apart from the vacancies so a page view rewrites only this small record). */
+  jobViews: Record<string, number>;
+  alertState: Record<string, { seen: string[]; lastRunDay?: string; lastSentMs?: number }>;
   /** Version of the master-data seed that was last applied (new seed kinds are added, edits are never overwritten). */
   masterSeedVersion: number;
 }
@@ -35,8 +47,8 @@ function queue<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 function ensureShape(db: Db): void {
-  for (const k of ['users', 'outbox', 'audit', 'suppressed'] as const) if (!Array.isArray(db[k])) db[k] = [];
-  for (const k of ['sessions', 'tokens', 'otp', 'master'] as const) if (!db[k] || typeof db[k] !== 'object' || Array.isArray(db[k])) db[k] = {};
+  for (const k of ['users', 'outbox', 'audit', 'suppressed', 'schools', 'jobs', 'documents', 'applications', 'savedJobs', 'tracked', 'alerts'] as const) if (!Array.isArray(db[k])) db[k] = [];
+  for (const k of ['sessions', 'tokens', 'otp', 'master', 'profiles', 'alertState', 'jobViews'] as const) if (!db[k] || typeof db[k] !== 'object' || Array.isArray(db[k])) db[k] = {};
   if (typeof db.masterSeedVersion !== 'number') db.masterSeedVersion = 0;
   seedMasterData(db as unknown as Collections);
 }

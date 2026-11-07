@@ -3,7 +3,7 @@
 Teacher recruitment for Indian schools: every board (CBSE, CISCE, NIOS, state boards, IB, Cambridge),
 government, aided and private. www.theschoolteacher.in · A product of UKQAAI Technologies (www.ukqaai.com).
 
-Status: **Phase 1 (Foundation)** done. See `docs/ARCHITECTURE.md` and `docs/VERIFY_BEFORE_LAUNCH.md`.
+Status: **Phase 1 (Foundation)** and **Phase 2 (Candidate core)** done. See `docs/ARCHITECTURE.md` and `docs/VERIFY_BEFORE_LAUNCH.md`.
 
 ## Run it on your laptop
 ```bash
@@ -17,8 +17,15 @@ to create the first administrator (you will be asked to choose a new password), 
 ## Checks
 ```bash
 npm run typecheck   # TypeScript, strict
-npm test            # 39 tests: security, store, master data, auth, email codes, outbox, guards, i18n
+npm test            # 60 tests: security, storage, master data, auth, codes, outbox, guards, i18n, search, match, candidate flows
 npm run build
+```
+
+## Try the candidate screens with sample vacancies (local only)
+```bash
+npm run seed:demo                 # adds clearly-labelled sample schools and vacancies
+TST_SHOW_DEMO=1 npm run dev       # sample data is hidden unless this is set
+npm run seed:demo -- --clear      # removes them
 ```
 
 ## Deploy (GoDaddy Node.js Hosting, same as AcadeXMatch)
