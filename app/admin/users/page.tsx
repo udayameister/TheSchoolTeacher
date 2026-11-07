@@ -34,7 +34,7 @@ export default function AdminUsers() {
         <label><span className="sr-only">Role</span><select className="input" value={role} onChange={e => setRole(e.target.value)}><option value="">All roles</option>{Object.entries(ROLE_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>
       </div>
       {users === null ? <p>Loading…</p> : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-paper">
+        <div className="relative overflow-x-auto rounded-xl border border-line bg-paper">
           <table className="table">
             <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Role</th><th scope="col">Joined</th><th scope="col">Status</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead>
             <tbody>

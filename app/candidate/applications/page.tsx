@@ -38,7 +38,7 @@ export default async function ApplicationsPage() {
                   <span className={`badge self-start px-3 py-1 text-sm ${ended ? 'border-line bg-ivory text-ink-soft' : 'border-brand-300 bg-brand-50 text-brand-800'}`}>{t(`stages.${a.stage}`)}</span>
                 </div>
                 {/* Stage timeline: the same stages the school uses in its pipeline. */}
-                <ol className="flex gap-1 overflow-x-auto pb-1" aria-label={t('applications.timeline')}>
+                <ol className="flex gap-1 relative overflow-x-auto pb-1" aria-label={t('applications.timeline')}>
                   {STAGES.map((s, i) => {
                     const done = !ended && i <= reached;
                     const when = a.history.find(h => h.stage === s)?.at;

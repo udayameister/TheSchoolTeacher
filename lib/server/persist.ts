@@ -230,6 +230,13 @@ export async function storageStatus(): Promise<{ backend: Backend; ok: boolean; 
   }
 }
 
+/** Runs a query on the MySQL pool (after the schema exists). Only for backend() === 'mysql'. */
+export async function sql<T = RowDataPacket[]>(query: string, params: unknown[] = []): Promise<T> {
+  await ensureSchema();
+  const [rows] = await (await pool()).query(query, params);
+  return rows as T;
+}
+
 /** Test helper: forget cached data (e.g. after pointing TST_DATA_DIR somewhere else). */
 export function resetCaches(): void {
   cache.__tstMain = undefined;

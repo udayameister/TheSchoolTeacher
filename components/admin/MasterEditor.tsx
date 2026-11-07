@@ -179,7 +179,7 @@ export default function MasterEditor({ def }: { def: KindDef }) {
       </div>
 
       {items === null ? <p>Loading…</p> : filtered.length === 0 ? <p className="card text-ink-soft">No items{items.length ? ' match these filters' : ' yet'}.{def.kind === 'districts' || def.kind === 'blocks' ? ' Import them as CSV from the Local Government Directory.' : ''}</p> : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-paper">
+        <div className="relative overflow-x-auto rounded-xl border border-line bg-paper">
           <table className="table">
             <thead><tr><th scope="col">Code</th><th scope="col">Name</th>{def.parent && <th scope="col">{def.parent.label}</th>}<th scope="col">Details</th><th scope="col">Status</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead>
             <tbody>

@@ -28,7 +28,7 @@ export default function AuditLog() {
       </div>
       <a className="btn-ghost" href={`/api/admin/audit?${params}&format=csv`}>Download CSV</a>
       {data === null ? <p>Loading…</p> : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-paper">
+        <div className="relative overflow-x-auto rounded-xl border border-line bg-paper">
           <table className="table">
             <thead><tr><th scope="col">Time (UTC)</th><th scope="col">Action</th><th scope="col">By</th><th scope="col">Target</th><th scope="col">Detail</th></tr></thead>
             <tbody>{data.rows.map(a => (

@@ -180,29 +180,33 @@ export function revokeSessions(userId: string, keepToken?: string): Promise<numb
 
 // ------------------------------------------------------------------ one-time link tokens
 
-const TOKEN_HOURS: Record<TokenType, number> = { 'verify-email': 72, 'reset-password': 0.5 };
+const TOKEN_HOURS: Record<TokenType, number> = { 'verify-email': 72, 'reset-password': 0.5, 'verify-school-email': 72 };
 
 /** Creates a link token; any earlier token of the same type for this user stops working. Only its digest is stored. */
-export function createToken(userId: string, type: TokenType): Promise<string> {
+export function createToken(userId: string, type: TokenType, data?: string): Promise<string> {
   const token = randomToken(32);
   return withDb(db => {
     const now = Date.now();
-    for (const [k, t] of Object.entries(db.tokens)) if (t.expiresAt < now || (t.userId === userId && t.type === type)) delete db.tokens[k];
-    db.tokens[digest(token)] = { userId, type, expiresAt: now + TOKEN_HOURS[type] * 3600_000 };
+    for (const [k, t] of Object.entries(db.tokens)) if (t.expiresAt < now || (t.userId === userId && t.type === type && t.data === data)) delete db.tokens[k];
+    db.tokens[digest(token)] = { userId, type, expiresAt: now + TOKEN_HOURS[type] * 3600_000, ...(data ? { data } : {}) };
     return token;
   });
 }
 
-/** Uses up a token. Returns the user id when it was valid. */
-export function consumeToken(token: string, type: TokenType): Promise<string | null> {
+/** Uses up a token. Returns the user id (and stored data) when it was valid. */
+export function consumeTokenData(token: string, type: TokenType): Promise<{ userId: string; data?: string } | null> {
   if (!token || token.length > 200) return Promise.resolve(null);
   return withDb(db => {
     const key = digest(token);
     const t = db.tokens[key];
     if (!t || t.type !== type) return null;
     delete db.tokens[key];
-    return t.expiresAt >= Date.now() ? t.userId : null;
+    return t.expiresAt >= Date.now() ? { userId: t.userId, data: t.data } : null;
   });
+}
+
+export async function consumeToken(token: string, type: TokenType): Promise<string | null> {
+  return (await consumeTokenData(token, type))?.userId ?? null;
 }
 
 export function markEmailVerified(userId: string): Promise<UserAccount | null> {

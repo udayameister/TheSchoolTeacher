@@ -11,7 +11,8 @@ The admin dashboard shows how many items still carry the **VERIFY** flag.
 | Teacher Eligibility Tests | Name, conducting body, papers, and **certificate validity** of every TET. CTET is seeded as "Lifetime (NCTE decision, 2021)": confirm. State TET validity varies by state; the field is empty until checked. Add exams that are missing. | NCTE notifications; ctet.nic.in; each state's TET notification |
 | 7th CPC pay levels | Entry basic pay of levels 1–14 (seeded from the central pay matrix) and the post → level mapping (PRT L6, TGT/Librarian L7, PGT L8, Vice Principal L10, Principal L12, as in KVS). | 7th CPC pay matrix; latest KVS / NVS recruitment notifications |
 | School subscription categories | **All prices are placeholders (₹0).** Set the annual price and branches per category. | Business decision |
-| States & UTs | 28 states + 8 UTs as of the seed date; Hindi names. | Government of India / LGD |
+| States & UTs | 28 states + 8 UTs as of the seed date; Hindi names; **UDISE+ code prefixes** (seeded from the Census 2011 state codes, e.g. AP 28/37, Telangana 36; Ladakh left empty). The prefix only produces a warning, never a refusal. | Government of India / LGD; a few known UDISE+ codes per state |
+| UDISE+ directory | Not seeded. Import the school directory as CSV (Admin → UDISE+ directory) so registrations can be matched. | UDISE+ reports (udiseplus.gov.in) |
 | Districts, blocks | **Not seeded.** Import from the Local Government Directory as CSV (Admin → Master data → Districts → Import CSV; columns `code,name,nameHi,parentCode,lgdCode`, where `parentCode` is the state code such as `AP`). | lgdirectory.gov.in |
 | Legal pages | Terms, Privacy, Refund policy are drafts and show a "Draft" notice. Name a Grievance Officer (DPDP Act). | A lawyer |
 | Contact address | `CONTACT_EMAIL` defaults to info@theschoolteacher.in. | Your mailbox |

@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 import { openStore, type Db } from './persist';
-import type { Application, AuditEntry, CandidateProfile, Job, JobAlert, MasterItem, MasterKind, OtpChallenge, OutboxItem, SavedJob, School, Session, StoredDocument, TokenRecord, TrackedJob, UserAccount } from '@/types';
+import type { Application, ApplicationNote, AuditEntry, CandidateProfile, Job, JobAlert, MasterItem, MasterKind, OtpChallenge, OutboxItem, SavedJob, School, SchoolGroup, Session, StoredDocument, TokenRecord, TrackedJob, UserAccount } from '@/types';
 import { seedMasterData } from '@/lib/masterData/seed';
 
 /*
@@ -21,6 +21,8 @@ export interface Collections {
   suppressed: string[];
   master: Partial<Record<MasterKind, MasterItem[]>>;
   schools: School[];
+  groups: SchoolGroup[];
+  appNotes: ApplicationNote[];
   jobs: Job[];
   profiles: Record<string, CandidateProfile>;
   documents: StoredDocument[];
@@ -47,7 +49,7 @@ function queue<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 function ensureShape(db: Db): void {
-  for (const k of ['users', 'outbox', 'audit', 'suppressed', 'schools', 'jobs', 'documents', 'applications', 'savedJobs', 'tracked', 'alerts'] as const) if (!Array.isArray(db[k])) db[k] = [];
+  for (const k of ['users', 'outbox', 'audit', 'suppressed', 'schools', 'groups', 'appNotes', 'jobs', 'documents', 'applications', 'savedJobs', 'tracked', 'alerts'] as const) if (!Array.isArray(db[k])) db[k] = [];
   for (const k of ['sessions', 'tokens', 'otp', 'master', 'profiles', 'alertState', 'jobViews'] as const) if (!db[k] || typeof db[k] !== 'object' || Array.isArray(db[k])) db[k] = {};
   if (typeof db.masterSeedVersion !== 'number') db.masterSeedVersion = 0;
   seedMasterData(db as unknown as Collections);

@@ -21,7 +21,7 @@ export default async function Footer() {
           <p className="text-sm text-ink-soft">{t('footer.about')}</p>
         </div>
         {col(t('footer.candidates'), [{ href: '/jobs', label: t('nav.jobs') }, { href: '/jobs?type=government', label: t('nav.govtNotices') }, { href: '/register', label: t('nav.register') }])}
-        {col(t('footer.schools'), [{ href: '/for-schools', label: t('nav.forSchools') }, { href: '/register?role=school', label: t('home.forSchoolsCta') }])}
+        {col(t('footer.schools'), [{ href: '/for-schools', label: t('nav.forSchools') }, { href: '/schools', label: t('school.directoryTitle') }, { href: '/register?role=school', label: t('home.forSchoolsCta') }])}
         {col(t('footer.legal'), [{ href: '/terms', label: t('footer.terms') }, { href: '/privacy', label: t('footer.privacy') }, { href: '/refund-policy', label: t('footer.refund') }, { href: '/contact', label: t('footer.contact') }])}
       </div>
       <div className="border-t border-line">

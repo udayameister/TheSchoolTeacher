@@ -75,6 +75,7 @@ export default async function JobPage({ params }: { params: Params }) {
       saved: !!candidate && db.savedJobs.some(s => s.userId === candidate.id && s.jobId === job.id),
       tracked: !!candidate && db.tracked.some(tr => tr.userId === candidate.id && tr.jobId === job.id),
       hasProfile: !!profile,
+      schoolSlug: job.schoolId ? db.schools.find(x => x.id === job.schoolId && x.verification === 'verified')?.slug ?? null : null,
     };
   });
   if (!data) notFound();
@@ -99,7 +100,7 @@ export default async function JobPage({ params }: { params: Params }) {
               {closed && <span className="badge border-danger-600/30 bg-danger-50 text-danger-700">{t('jobs.closed')}</span>}
             </div>
             <h1 className="text-2xl font-bold sm:text-3xl">{job.title}</h1>
-            <p className="flex items-center gap-1.5 text-lg text-ink-soft">{job.kind === 'government' ? <Landmark size={18} aria-hidden="true" /> : <Building2 size={18} aria-hidden="true" />}{job.orgName}</p>
+            <p className="flex items-center gap-1.5 text-lg text-ink-soft">{job.kind === 'government' ? <Landmark size={18} aria-hidden="true" /> : <Building2 size={18} aria-hidden="true" />}{data.schoolSlug ? <Link href={`/schools/${data.schoolSlug}`}>{job.orgName}</Link> : job.orgName}</p>
             <p className={dl.urgent ? 'font-semibold text-danger-700' : 'text-ink-soft'}>{dl.text}</p>
             {/* On phones the apply box is below the details, so offer a jump to it. */}
             <a href="#apply-h" className="btn-primary lg:hidden">{t('jobs.jumpToApply')}</a>

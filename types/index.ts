@@ -35,8 +35,10 @@ export interface UserAccount {
   mustChangePassword?: boolean;
   phone?: string | null;
   phoneVerified?: boolean;
-  /** For school_admin / school_staff: the school (or school group) the account belongs to. Set in Phase 3. */
+  /** For school_admin / school_staff: the school the account is working on (a group admin can switch branches). */
   schoolId?: string | null;
+  /** For the administrator of a school group / trust: every school with this groupId can be managed. */
+  groupId?: string | null;
   identities?: LinkedIdentity[];
   consents: ConsentRecord[];
   /** Mailing lists the person unsubscribed from ("alerts", "digest", "news"). */
@@ -59,8 +61,8 @@ export interface Session {
   method?: string;
 }
 
-export type TokenType = 'verify-email' | 'reset-password';
-export interface TokenRecord { userId: string; type: TokenType; expiresAt: number }
+export type TokenType = 'verify-email' | 'reset-password' | 'verify-school-email';
+export interface TokenRecord { userId: string; type: TokenType; expiresAt: number; data?: string }
 
 export type OtpPurpose = 'login' | 'admin-mfa';
 export interface OtpChallenge {
@@ -114,7 +116,7 @@ export type MasterKind =
   | 'states' | 'districts' | 'blocks'
   | 'boards' | 'managementTypes' | 'schoolLevels' | 'streams' | 'mediums'
   | 'posts' | 'subjects' | 'qualifications' | 'tetExams' | 'employmentTypes' | 'benefits'
-  | 'payLevels' | 'matchWeights' | 'panelDimensions' | 'schoolCategories';
+  | 'payLevels' | 'matchWeights' | 'panelDimensions' | 'schoolCategories' | 'facilities';
 
 export type MetaValue = string | number | boolean | null;
 
@@ -141,30 +143,57 @@ export interface MasterItem {
 
 export type VerificationStatus = 'pending' | 'verified' | 'rejected';
 
+export interface SchoolGroup { id: string; name: string; ownerId: string; createdAt: string }
+
+export interface SchoolPhoto { id: string; blobId: string; mime: string; caption?: string | null }
+
 export interface School {
   id: string;
+  /** URL name for the public page: /schools/<slug>. */
+  slug: string;
   name: string;
   /** 11-digit UDISE+ school code. */
   udiseCode: string;
+  groupId?: string | null;
   managementTypeId: string;
+  /** Boards with the school's affiliation number for each. */
+  affiliations: { boardId: string; number?: string | null }[];
   boardIds: string[];
   levelIds: string[];
+  streamIds: string[];
   mediumIds: string[];
   stateId: string;
   districtId?: string | null;
   blockId?: string | null;
   city: string;
+  address?: string | null;
   pincode?: string | null;
   lat?: number | null;
   lng?: number | null;
+  officialEmail?: string | null;
+  officialEmailVerified?: boolean;
+  phone?: string | null;
+  principalName?: string | null;
   website?: string | null;
   about?: string | null;
+  facilityIds: string[];
+  photos: SchoolPhoto[];
   verification: VerificationStatus;
+  verificationNote?: string | null;
+  submittedAt?: string | null;
   verifiedAt?: string | null;
+  reviewedBy?: string | null;
+  /** The UDISE+ code was found in the admin-imported directory with the same name. */
+  directoryMatch?: boolean;
+  createdBy?: string | null;
   createdAt: string;
+  updatedAt?: string | null;
   /** Sample data created by `npm run seed:demo` on a local copy. Never shown in production. */
   demo?: boolean;
 }
+
+/** One row of the UDISE+ school directory (reference data the admin imports). */
+export interface UdiseRecord { code: string; name: string; state?: string | null; district?: string | null; block?: string | null; management?: string | null; category?: string | null }
 
 // ------------------------------------------------------------------ vacancies
 
@@ -330,6 +359,8 @@ export interface Application {
   appliedAt: string;
   updatedAt: string;
 }
+
+export interface ApplicationNote { id: string; applicationId: string; authorId: string; authorName: string; text: string; at: string }
 
 export interface SavedJob { userId: string; jobId: string; at: string }
 

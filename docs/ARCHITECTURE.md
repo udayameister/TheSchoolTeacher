@@ -1,4 +1,4 @@
-# Architecture (Phases 1–2: Foundation, Candidate core)
+# Architecture (Phases 1–3: Foundation, Candidate core, School core)
 
 ## Stack
 Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind 3 · lucide-react · mysql2 · nodemailer.
@@ -98,6 +98,39 @@ demo-video links (Phase 4), interview preparation (§4.10), offer letters (Phase
 | `lib/server/alerts.ts` | `lib/server/jobAlerts.ts` | school filters, mailing-list unsubscribe, testable `collectDue` |
 | `app/api/candidate/documents`, `lib/server/documents.ts` | `app/api/documents/route.ts`, `lib/documents.ts` | signed URLs, scan hook, school-specific categories |
 | `lib/jobs/filters.ts` | idea of `lib/jobFilter.ts` | rewritten for school facets, distance and Hindi search |
+
+## Phase 3: School core
+- **Registration** (`lib/server/schools.ts`, `/school/register`): UDISE+ code (11 digits, checked against the
+  imported directory and the state's UDISE+ prefix as a warning), management type, boards with affiliation
+  numbers, location (optional map point for "near me"), official email (confirmation link sent when it differs
+  from the account email) and phone. A code already used by another school is refused.
+- **School groups / trusts**: the first school can be registered as a group; the group administrator then adds
+  branches (each with its own UDISE+ code, verified separately) and switches between them in the school console.
+- **Verification** (`/admin/schools`): pending / verified / rejected tabs with directory match, prefix warning,
+  duplicate codes, contact and account details. Rejecting needs a reason, which is emailed; a rejected school that
+  saves its details goes back to pending. Verified schools have their identity fields locked. Rejecting or
+  un-verifying closes the school's published vacancies.
+- **UDISE+ directory** (`lib/server/udise.ts`, `/admin/udise`): CSV import into table `tst_udise` (or
+  `data/udise.json`); never public. Pattern from AcadeXMatch's AISHE directory.
+- **Public school page** (`/schools/[slug]`, `/schools`): verified schools only; about, boards with affiliation
+  numbers, classes, streams, medium, facilities, photos (up to 8, public only after verification), map link,
+  open vacancies and schema.org `School` (a kind of `EducationalOrganization`) data. Added to the sitemap.
+- **Vacancies** (`lib/server/jobPosting.ts`, `/school/jobs`): full form (post, subjects, classes, streams,
+  employment type, posts, last date, eligibility incl. accepted TETs, pay as range / CPC level / state scale /
+  hidden, benefits, up to 10 screening questions with an expected answer, premium option). Location, boards and
+  management come from the school. Drafts while pending; publish only when verified; close / reopen / duplicate;
+  delete only drafts without applications; view and applicant counts. Publishing triggers instant job alerts.
+- **Applicant pipeline** (`lib/server/pipeline.ts`, `/school/applicants`): board (kanban) and list views, filters by
+  vacancy / stage / name, single and bulk moves through a "Move to" menu (keyboard- and screen-reader-friendly
+  instead of drag-and-drop). Candidates are emailed on Shortlisted, Demo / interview and Not selected.
+- **Applicant dossier** (`/school/applicants/[id]`): contact, screening answers with flags, full profile incl.
+  child-safety status, documents (signed links), match explanation (only with the candidate's matching consent),
+  history and internal notes. Each view is written to the audit log. A withdrawn application hides contact
+  details and documents and can no longer be moved.
+- Access: every school route checks `canManageSchool` / `managedSchools` on the server.
+
+Deferred to Phase 4 as planned: staff accounts with roles (HR, Principal, panel members), interviews and demo
+slots, panel scoring, offer letters, talent search, reports. Subscription gating of posting comes in Phase 5.
 
 ## Next phases
 2 Candidate core · 3 School core · 4 Hiring tools · 5 Money · 6 Government notices & growth · 7 Hardening

@@ -42,7 +42,9 @@ const id = (k: string, c: string) => `${k}:${c}`;
 
   const at = nowIso();
   const school = (name: string, district: string, state: string, city: string, mgmt: string, boards: string[], lat: number, lng: number): School => ({
-    id: newId('sch'), name, udiseCode: '00000000000', managementTypeId: id('managementTypes', mgmt), boardIds: boards.map(b => id('boards', b)),
+    id: newId('sch'), slug: `sample-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`, name,
+    affiliations: boards.map(b => ({ boardId: id('boards', b), number: null })), streamIds: [], facilityIds: [id('facilities', 'LIBRARY'), id('facilities', 'COMPUTER_LAB')], photos: [],
+    about: 'Sample school for testing TheSchoolTeacher. Not a real school.', udiseCode: '00000000000', managementTypeId: id('managementTypes', mgmt), boardIds: boards.map(b => id('boards', b)),
     levelIds: ['PRIMARY', 'UPPER_PRIMARY', 'SECONDARY', 'SENIOR_SECONDARY'].map(l => id('schoolLevels', l)), mediumIds: [id('mediums', 'EN')],
     stateId: id('states', state), districtId: id('districts', district), city, pincode: null, lat, lng, verification: 'verified', verifiedAt: at, createdAt: at, demo: true,
   });

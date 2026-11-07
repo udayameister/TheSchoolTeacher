@@ -34,7 +34,10 @@ export const KINDS: KindDef[] = [
   {
     kind: 'states', label: 'States & union territories', group: 'Location',
     description: 'All 28 states and 8 union territories. Districts and state boards hang under these.',
-    meta: [{ key: 'type', label: 'Type', type: 'select', options: [{ value: 'state', label: 'State' }, { value: 'ut', label: 'Union territory' }] }],
+    meta: [
+      { key: 'type', label: 'Type', type: 'select', options: [{ value: 'state', label: 'State' }, { value: 'ut', label: 'Union territory' }] },
+      { key: 'udisePrefix', label: 'UDISE+ code prefix(es)', type: 'text', hint: 'First two digits of UDISE+ codes in this state/UT, comma separated. Used only to warn about likely typos.' },
+    ],
   },
   {
     kind: 'districts', label: 'Districts', group: 'Location',
@@ -71,6 +74,7 @@ export const KINDS: KindDef[] = [
       { key: 'toClass', label: 'To class', type: 'number', min: 0, max: 12 },
     ],
   },
+  { kind: 'facilities', label: 'School facilities', group: 'School', description: 'Facilities a school can list on its public page.', meta: [] },
   { kind: 'streams', label: 'Streams (classes XI–XII)', group: 'School', description: 'Science, Commerce, Humanities, Vocational.', meta: [] },
   {
     kind: 'mediums', label: 'Mediums of instruction / languages', group: 'School',

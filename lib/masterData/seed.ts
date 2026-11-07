@@ -11,9 +11,10 @@ import type { MasterItem, MasterKind, MetaValue } from '@/types';
  *    the flag after checking it.
  *  - Districts and blocks are not seeded: import them from the Local Government Directory.
  *
- * Bump SEED_VERSION when you add seed items, so existing databases pick them up.
+ * Bump SEED_VERSION when you add seed items or seed meta fields, so existing databases pick them up.
+ * Meta fields that are missing on an existing item are filled in; values that exist are never changed.
  */
-export const SEED_VERSION = 1;
+export const SEED_VERSION = 2;
 
 interface SeedItem { code: string; name: string; nameHi?: string; parent?: string; verify?: boolean; meta?: Record<string, MetaValue> }
 
@@ -31,6 +32,21 @@ const STATES: SeedItem[] = [
   ['DH', 'Dadra and Nagar Haveli and Daman and Diu', 'दादरा और नगर हवेली और दमन और दीव'], ['DL', 'Delhi', 'दिल्ली'],
   ['JK', 'Jammu and Kashmir', 'जम्मू और कश्मीर'], ['LA', 'Ladakh', 'लद्दाख'], ['LD', 'Lakshadweep', 'लक्षद्वीप'], ['PY', 'Puducherry', 'पुडुचेरी'],
 ].map(([code, name, nameHi]) => ({ code, name, nameHi, meta: { type: 'ut' } })));
+
+// UDISE+ codes start with the state's census code. Seeded from the Census 2011 state codes: VERIFY.
+const UDISE_PREFIX: Record<string, string> = {
+  JK: '01', HP: '02', PB: '03', CH: '04', UK: '05', HR: '06', DL: '07', RJ: '08', UP: '09', BR: '10', SK: '11', AR: '12', NL: '13', MN: '14',
+  MZ: '15', TR: '16', ML: '17', AS: '18', WB: '19', JH: '20', OD: '21', CG: '22', MP: '23', GJ: '24', DH: '25,26', MH: '27', AP: '28,37',
+  KA: '29', GA: '30', LD: '31', KL: '32', TN: '33', PY: '34', AN: '35', TS: '36', LA: '',
+};
+for (const st of STATES) { st.meta = { ...st.meta, udisePrefix: UDISE_PREFIX[st.code] ?? '' }; st.verify = !!UDISE_PREFIX[st.code]; }
+
+const FACILITIES: SeedItem[] = ([
+  ['LIBRARY', 'Library', 'पुस्तकालय'], ['SCIENCE_LABS', 'Science laboratories', 'विज्ञान प्रयोगशालाएँ'], ['COMPUTER_LAB', 'Computer lab', 'कंप्यूटर लैब'],
+  ['SMART_CLASSES', 'Smart classrooms', 'स्मार्ट कक्षाएँ'], ['PLAYGROUND', 'Playground', 'खेल का मैदान'], ['TRANSPORT', 'School transport', 'विद्यालय परिवहन'],
+  ['HOSTEL', 'Hostel', 'छात्रावास'], ['STAFF_QUARTERS', 'Staff quarters', 'कर्मचारी आवास'], ['CAFETERIA', 'Cafeteria', 'कैंटीन'],
+  ['MEDICAL_ROOM', 'Medical room', 'चिकित्सा कक्ष'], ['AUDITORIUM', 'Auditorium', 'सभागार'], ['RAMPS', 'Ramps and accessible toilets', 'रैंप और सुलभ शौचालय'],
+] as string[][]).map(([code, name, nameHi]) => ({ code, name, nameHi }));
 
 const national = (code: string, name: string, fullName: string, scope: string, website = ''): SeedItem =>
   ({ code, name, verify: true, meta: { scope, fullName, website } });
@@ -242,7 +258,7 @@ export const SEED: Partial<Record<MasterKind, SeedItem[]>> = {
   states: STATES, boards: BOARDS, managementTypes: MANAGEMENT, schoolLevels: LEVELS, streams: STREAMS, mediums: MEDIUMS,
   posts: POSTS, subjects: SUBJECTS, qualifications: QUALIFICATIONS, tetExams: TETS, employmentTypes: EMPLOYMENT, benefits: BENEFITS,
   payLevels: PAY_LEVELS, matchWeights: MATCH_WEIGHTS, panelDimensions: PANEL, schoolCategories: SCHOOL_CATEGORIES,
-  districts: [], blocks: [],
+  districts: [], blocks: [], facilities: FACILITIES,
 };
 
 /** Parent kind used to resolve a seed item's `parent` code. */
@@ -256,9 +272,15 @@ export function seedMasterData(db: { master: Partial<Record<MasterKind, MasterIt
   const at = new Date().toISOString();
   for (const [kind, items] of Object.entries(SEED) as [MasterKind, SeedItem[]][]) {
     const list = (db.master[kind] ||= []);
-    const have = new Set(list.map(i => i.code));
+    const byCode = new Map(list.map(i => [i.code, i]));
     items.forEach((s, i) => {
-      if (have.has(s.code)) return;
+      const existing = byCode.get(s.code);
+      if (existing) {
+        // Fill in meta fields added in a later seed version; never overwrite an existing value.
+        for (const [k, v] of Object.entries(s.meta || {})) if (existing.meta[k] === undefined) existing.meta[k] = v;
+        if (s.code in UDISE_PREFIX && kind === 'states' && existing.meta.udisePrefix && !existing.verify && existing.updatedBy === 'seed') existing.verify = true;
+        return;
+      }
       const parentKind = SEED_PARENT[kind];
       list.push({
         id: masterId(kind, s.code), kind, code: s.code, name: s.name, ...(s.nameHi ? { nameHi: s.nameHi } : {}),

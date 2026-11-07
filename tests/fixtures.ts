@@ -6,7 +6,8 @@ const plus = (n: number) => new Date(Date.now() + n * 86400000).toLocaleDateStri
 let n = 0;
 
 export function school(o: Partial<School> = {}): School {
-  return { id: `sch_t${++n}`, name: 'Test School', udiseCode: '12345678901', managementTypeId: id('managementTypes', 'PRIVATE_UNAIDED'), boardIds: [id('boards', 'CBSE')], levelIds: [], mediumIds: [], stateId: id('states', 'AP'), districtId: id('districts', 'CHITTOOR'), city: 'Madanapalle', verification: 'verified', createdAt: new Date().toISOString(), ...o };
+  const sid = `sch_t${++n}`;
+  return { id: sid, slug: sid, affiliations: [{ boardId: id('boards', 'CBSE'), number: '130001' }], streamIds: [], facilityIds: [], photos: [], name: 'Test School', udiseCode: '12345678901', managementTypeId: id('managementTypes', 'PRIVATE_UNAIDED'), boardIds: [id('boards', 'CBSE')], levelIds: [], mediumIds: [], stateId: id('states', 'AP'), districtId: id('districts', 'CHITTOOR'), city: 'Madanapalle', verification: 'verified', createdAt: new Date().toISOString(), ...o };
 }
 
 export function job(o: Partial<Job> = {}): Job {

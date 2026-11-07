@@ -11,6 +11,7 @@ export default async function AdminHome() {
       byRole: db.users.reduce<Record<string, number>>((m, u) => ({ ...m, [u.role]: (m[u.role] || 0) + 1 }), {}),
       verify: Object.values(db.master).flat().filter(i => i && i.verify && i.active).length,
       failedMail: db.outbox.filter(o => o.status === 'failed').length,
+      pendingSchools: db.schools.filter(x => x.verification === 'pending' && !x.demo).length,
       queuedMail: db.outbox.filter(o => o.status === 'queued').length,
     })),
     storageStatus(),
@@ -22,10 +23,11 @@ export default async function AdminHome() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Administration</h1>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {tile('Accounts', stats.users, '/admin/users')}
         {tile('Teachers', stats.byRole.candidate || 0)}
         {tile('School accounts', (stats.byRole.school_admin || 0) + (stats.byRole.school_staff || 0))}
+        {tile('Schools waiting for verification', stats.pendingSchools, '/admin/schools')}
         {tile('Master data to verify', stats.verify, '/admin/master')}
       </div>
       <section className="card">

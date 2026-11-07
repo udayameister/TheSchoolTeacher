@@ -1,6 +1,7 @@
 import type { DocumentCategory, StoredDocument, UserAccount } from '@/types';
 import type { Store } from './db';
 import { safeEqual, sign } from './security';
+import { managedSchools } from './schools';
 
 /*
  * Candidate documents. Adapted from AcadeXMatch app/api/documents (magic-byte type check, size limits,
@@ -30,8 +31,9 @@ export const blobIdFor = (userId: string, docId: string, mime: string) => `docum
 export function canViewDocuments(db: Store, viewer: UserAccount | null | undefined, ownerId: string): boolean {
   if (!viewer) return false;
   if (viewer.id === ownerId || viewer.role === 'platform_admin') return true;
-  if ((viewer.role === 'school_admin' || viewer.role === 'school_staff') && viewer.schoolId) {
-    return db.applications.some(a => a.candidateId === ownerId && a.schoolId === viewer.schoolId && a.stage !== 'withdrawn');
+  if (viewer.role === 'school_admin' || viewer.role === 'school_staff') {
+    const mine = new Set(managedSchools(db, viewer).map(s => s.id));
+    return db.applications.some(a => a.candidateId === ownerId && !!a.schoolId && mine.has(a.schoolId) && a.stage !== 'withdrawn');
   }
   return false;
 }

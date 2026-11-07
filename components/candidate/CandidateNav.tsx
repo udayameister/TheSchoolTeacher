@@ -13,7 +13,7 @@ export default function CandidateNav() {
   const path = usePathname();
   return (
     <nav aria-label={t('candidate.navLabel')} className="border-b border-line bg-paper">
-      <ul className="container-page flex gap-1 overflow-x-auto py-2">
+      <ul className="container-page flex gap-1 relative overflow-x-auto py-2">
         {TABS.map(([href, key]) => {
           const active = href === '/candidate' ? path === href : path.startsWith(href);
           return <li key={href}><Link href={href} aria-current={active ? 'page' : undefined} className={`block whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold no-underline ${active ? 'bg-brand-700 text-white' : 'text-brand-800 hover:bg-brand-50'}`}>{t(`candidate.nav_${key}`)}</Link></li>;
