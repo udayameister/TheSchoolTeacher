@@ -1,0 +1,43 @@
+/* Self-hosted fonts (only the weights and scripts we use, so phones download little). */
+@import '@fontsource/noto-sans/latin-400.css';
+@import '@fontsource/noto-sans/latin-600.css';
+@import '@fontsource/noto-sans/latin-700.css';
+@import '@fontsource/noto-sans-devanagari/devanagari-400.css';
+@import '@fontsource/noto-sans-devanagari/devanagari-600.css';
+@import '@fontsource/noto-sans-devanagari/devanagari-700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-ivory text-ink antialiased; }
+  h1, h2, h3 { @apply text-brand-900; }
+  a { @apply text-brand-700 underline-offset-2; }
+  a:hover { @apply underline; }
+  /* Visible keyboard focus everywhere (WCAG 2.4.7). */
+  :focus-visible { outline: 3px solid #F0A22B; outline-offset: 2px; border-radius: 4px; }
+}
+
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-6xl px-4; }
+  .card { @apply rounded-xl border border-line bg-paper p-5 shadow-card; }
+  .btn { @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-4 py-2 font-semibold no-underline transition-colors disabled:cursor-not-allowed disabled:opacity-60; }
+  .btn:hover { text-decoration: none; }
+  .btn-primary { @apply btn bg-brand-700 text-white hover:bg-brand-800; }
+  .btn-accent { @apply btn bg-marigold-400 text-ink hover:bg-marigold-300; }
+  .btn-ghost { @apply btn border border-line bg-paper text-brand-800 hover:bg-brand-50; }
+  .btn-danger { @apply btn bg-danger-600 text-white hover:bg-danger-700; }
+  .label { @apply mb-1 block text-sm font-semibold text-ink; }
+  .input { @apply block min-h-[44px] w-full rounded-lg border border-line bg-paper px-3 py-2 text-ink placeholder:text-ink-muted focus:border-brand-600; }
+  .hint { @apply mt-1 text-sm text-ink-muted; }
+  .badge { @apply inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold; }
+  .alert-error { @apply rounded-lg border border-danger-600/30 bg-danger-50 px-3 py-2 text-sm text-danger-700; }
+  .alert-ok { @apply rounded-lg border border-success-600/30 bg-success-50 px-3 py-2 text-sm text-success-700; }
+  .table { @apply w-full border-collapse text-left text-sm; }
+  .table th { @apply border-b border-line bg-brand-50 px-3 py-2 font-semibold text-brand-900; }
+  .table td { @apply border-b border-line px-3 py-2 align-top; }
+}
+
+.sr-only-focusable:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }

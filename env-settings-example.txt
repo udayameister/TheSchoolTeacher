@@ -1,0 +1,88 @@
+# TheSchoolTeacher settings
+# Create a file named ".env.local" in the project folder (next to package.json), copy the lines you
+# need from here, fill in your values, then restart the app (npm run dev / npm start).
+# .env.local is private: never share it or commit it to GitHub. (On GoDaddy, enter the same names
+# and values in the hosting panel's environment variables instead.)
+
+# ---------------------------------------------------------------- Site addresses
+# Public address of the site. Used in links inside emails and for Google sign-in.
+APP_URL=http://localhost:3000
+# Canonical address for search engines (the host the site finally serves after redirects).
+# SITE_URL=https://www.theschoolteacher.in
+# Address shown on the Contact page and in email footers.
+# CONTACT_EMAIL=info@theschoolteacher.in
+
+# ---------------------------------------------------------------- Database
+# On GoDaddy Node.js Hosting these five are filled in automatically for the app's MySQL database.
+# Locally, leave them out: data is then kept in the "data" folder (data/db.json and data/blobs).
+# DB_HOST=localhost
+# DB_PORT=3306
+# DB_NAME=theschoolteacher
+# DB_USER=theschoolteacher
+# DB_PASSWORD=your-password
+# Set to true only if your MySQL server requires an encrypted connection with a valid certificate.
+# DB_SSL=false
+# Force the local file store even when DB_HOST is set (testing only).
+# TST_STORAGE=file
+
+# ---------------------------------------------------------------- Security (required in production)
+# Secret used to sign sign-in codes, Google sign-in state and unsubscribe links.
+# At least 32 random characters. Create one with:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+# Without it, codes and links stop working whenever the app restarts.
+AUTH_SECRET=
+
+# First platform administrator. When no administrator exists yet, the first sign-in attempt creates
+# this account with this password and forces a password change. Remove both lines after that.
+# ADMIN_EMAIL=you@theschoolteacher.in
+# ADMIN_INITIAL_PASSWORD=a-temporary-password-123
+# Administrators also enter a code sent by email after their password, once email is set up.
+# Set to off to skip that step (not recommended).
+# ADMIN_EMAIL_CODE=on
+
+# Password hashing strength (PBKDF2-SHA256 iterations). Default 600000 (OWASP). Do not lower in production.
+# PBKDF2_ITERATIONS=600000
+
+# Email sign-in codes: minutes a code is valid (default 10) and seconds before a new one can be asked for (default 60).
+# OTP_EXPIRY_MINUTES=10
+# OTP_RESEND_SECONDS=60
+
+# ---------------------------------------------------------------- Email (choose ONE way)
+# Without any email settings the site still works: every email is only recorded in Admin → Email outbox.
+#
+# Way 1: SMTP (e.g. a Gmail account with an App Password, or your mailbox provider's SMTP).
+#   Gmail: turn on 2-Step Verification, then Google Account → Security → App passwords.
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=465
+# SMTP_SECURE=true
+# SMTP_USER=yourname@gmail.com
+# SMTP_PASS=your16charapppassword
+# MAIL_FROM=TheSchoolTeacher <yourname@gmail.com>
+#
+# Way 2: an email API over HTTPS. Use this on hosts that block email ports 465/587 (GoDaddy Node.js
+# hosting does). Brevo (free tier) or Resend: verify the sender address/domain there, create an API key.
+# When EMAIL_API is set it is used instead of SMTP.
+# EMAIL_API=brevo
+# EMAIL_API_KEY=xkeysib-xxxxxxxx
+# MAIL_FROM=TheSchoolTeacher <info@theschoolteacher.in>
+#
+# Test copies of the site: send EVERY email to this one inbox instead of the real recipient.
+# EMAIL_REDIRECT_TO=you@example.com
+
+# ---------------------------------------------------------------- Google sign-in (optional)
+# Google Cloud console → APIs & Services → Credentials → Create OAuth client ID (Web application).
+# Authorised redirect URI: <APP_URL>/api/auth/google/callback
+#   e.g. https://www.theschoolteacher.in/api/auth/google/callback
+# The "Continue with Google" button appears only when both are set.
+# GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+# GOOGLE_CLIENT_SECRET=xxxxxxxx
+
+# ---------------------------------------------------------------- Search engines (optional)
+# Google Search Console → HTML tag: copy only the content="…" value.
+# GOOGLE_SITE_VERIFICATION=
+# Bing Webmaster Tools → HTML meta tag msvalidate.01: copy only the content="…" value.
+# BING_SITE_VERIFICATION=
+
+# ---------------------------------------------------------------- Later phases (not used yet)
+# Razorpay (Phase 5): RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET
+# IndexNow (Phase 6): INDEXNOW_KEY

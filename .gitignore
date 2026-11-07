@@ -1,0 +1,19 @@
+# dependencies
+/node_modules
+# next.js
+/.next/
+/out/
+/build
+*.tsbuildinfo
+# env files (secrets live only here)
+.env
+.env*.local
+# local file store (database, uploaded documents, sessions) — private
+/data/*
+!/data/.gitkeep
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+*.bak
+*.tmp
