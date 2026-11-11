@@ -206,7 +206,12 @@ export interface UdiseRecord { code: string; name: string; state?: string | null
 
 // ------------------------------------------------------------------ vacancies
 
-export type JobKind = 'school' | 'government';
+/**
+ * school: posted by a verified school on the platform. government: an official recruitment notice (KVS, NVS,
+ * state DSC / TRB …). external: a vacancy published elsewhere (a school's own careers page or a feed), listed
+ * with a link to the original. government and external listings are added by the admin (often from the importer).
+ */
+export type JobKind = 'school' | 'government' | 'external';
 export type JobStatus = 'draft' | 'published' | 'closed';
 export type ApplyMode = 'platform' | 'external';
 export type PayMode = 'cpc' | 'state_scale' | 'range' | 'not_disclosed';
@@ -291,6 +296,10 @@ export interface Job {
   updatedAt: string;
   createdBy?: string | null;
   views: number;
+  /** Where an imported / admin-added listing was found (shown as "Source"). */
+  sourceName?: string | null;
+  sourceUrl?: string | null;
+  importItemId?: string | null;
   /** Selection panel for this vacancy: staff members who score applicants (confidentially). */
   panel?: PanelMember[];
   demo?: boolean;
@@ -543,4 +552,58 @@ export interface TalentInvite {
   message?: string | null;
   invitedBy: string;
   at: string;
+}
+
+// ------------------------------------------------------------------ job import (external sources)
+
+/** govt_page: an official recruitment / notices page. school_careers: a school's careers page. feed: an RSS or Atom feed. */
+export type ImportSourceKind = 'govt_page' | 'school_careers' | 'feed';
+
+export interface ImportSource {
+  id: string;
+  name: string;
+  kind: ImportSourceKind;
+  url: string;
+  /** Employer shown on listings made from this source (e.g. "Kendriya Vidyalaya Sangathan"). */
+  orgName: string;
+  stateId?: string | null;
+  active: boolean;
+  /** How often it is checked. */
+  everyHours: number;
+  /** Seeded suggestion whose address must be checked before switching it on. */
+  verify?: boolean;
+  note?: string | null;
+  lastRunAt?: string | null;
+  lastStatus?: 'ok' | 'error' | 'blocked' | null;
+  lastError?: string | null;
+  lastFound?: number | null;
+  lastNew?: number | null;
+  createdBy?: string | null;
+  createdAt: string;
+}
+
+export type ImportStatus = 'new' | 'published' | 'rejected' | 'duplicate';
+
+/** One possible teacher vacancy / notice found by the importer, waiting for the admin's review. */
+export interface ImportItem {
+  id: string;
+  sourceId: string;
+  /** De-duplication key (link + title). */
+  hash: string;
+  title: string;
+  url: string;
+  /** The link points at a PDF notification. */
+  pdf: boolean;
+  /** A short piece of the text around the link, to help the reviewer (never published). */
+  excerpt?: string | null;
+  /** Last date or other date found near the link (YYYY-MM-DD), unconfirmed. */
+  detectedDate?: string | null;
+  /** Post master-data ids recognised in the title (PRT, TGT, PGT …). */
+  detectedPostIds: string[];
+  status: ImportStatus;
+  jobId?: string | null;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
 }

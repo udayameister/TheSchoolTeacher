@@ -33,7 +33,12 @@ export default async function AdminHome() {
       <section className="card">
         <h2 className="text-lg font-bold">System</h2>
         <ul className="mt-3 space-y-2 text-sm">
-          <li>Database: {storage.backend === 'mysql' ? 'MySQL' : 'local files (./data)'} {ok(storage.ok, 'working', `error: ${storage.error || ''}`)}</li>
+          <li>Database: {storage.backend === 'mysql' ? 'MySQL' : 'local files (./data)'} {ok(storage.ok, 'working', `error: ${storage.error || ''}`)}
+            {storage.tables && (
+              <details className="mt-1"><summary className="cursor-pointer text-brand-700">{storage.tables.length} tables · {storage.rows} rows · {storage.blobs} files</summary>
+                <ul className="mt-1 grid gap-x-6 text-xs sm:grid-cols-2 lg:grid-cols-3">{storage.tables.map(x => <li key={x.table} className="flex justify-between gap-2 border-b border-line py-0.5"><code>{x.table}</code><span>{x.rows}</span></li>)}</ul>
+              </details>
+            )}</li>
           <li>Email: {ok(emailConfigured(), 'configured', 'not configured: messages are only recorded in the outbox')} {stats.queuedMail ? `· ${stats.queuedMail} waiting to retry` : ''} {stats.failedMail ? `· ${stats.failedMail} failed` : ''}</li>
           <li>Google sign-in: {ok(googleConfigured(), 'on', 'off (GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET not set)')}</li>
           <li>Signing secret: {ok(!!process.env.AUTH_SECRET && process.env.AUTH_SECRET.length >= 32, 'set', 'AUTH_SECRET missing: codes and links stop working after a restart')}</li>

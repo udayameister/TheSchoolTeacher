@@ -21,7 +21,7 @@ export function lookupOf(db: Store): Lookup {
 export function isPublic(db: Store, job: Job): boolean {
   if (job.status === 'draft') return false;
   if (job.demo && !showDemo()) return false;
-  if (job.kind === 'government') return true;
+  if (job.kind === 'government' || job.kind === 'external') return true;
   const school = db.schools.find(s => s.id === job.schoolId);
   return !!school && (school.verification === 'verified' || (!!school.demo && showDemo()));
 }

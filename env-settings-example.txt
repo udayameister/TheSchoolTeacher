@@ -91,8 +91,16 @@ AUTH_SECRET=
 # CLAMAV_PORT=3310
 # Refuse uploads when ClamAV cannot be reached (default: accept and log).
 # CLAMAV_REQUIRED=false
-# Job alerts and email retries run inside the web server every 10 minutes. Set to 1 to switch that off.
+# Job alerts, interview reminders, the job importer and email retries run inside the web server every 10 minutes.
+# Set to 1 to switch all of that off.
 # TST_DISABLE_SCHEDULER=1
+# Switch off only the automatic job import (sources can still be read with "Run now").
+# TST_DISABLE_IMPORTS=1
+# LOCAL TESTING ONLY: let the importer read local / private network addresses. Never set this on the live site.
+# TST_IMPORT_ALLOW_PRIVATE=1
+# DEVELOPERS ONLY: `TST_TEST_DB=1 npm test` runs the tests against the database in DB_HOST / DB_NAME (it DROPS every
+# tst_ table there first, so use an empty test database, never the live one).
+# TST_TEST_DB=1
 # LOCAL TESTING ONLY: show the sample vacancies created by `npm run seed:demo`. Never set this on the live site.
 # TST_SHOW_DEMO=1
 

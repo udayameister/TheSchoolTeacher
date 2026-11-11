@@ -54,7 +54,7 @@ export function describeFilters(f: import('@/types').JobFilters, lookup: Lookup,
   const n = (kind: string, codes?: string[]) => (codes || []).map(c => nameOf(lookup, `${kind}:${c}`, locale) || c);
   return [
     f.q ? `“${f.q}”` : '',
-    f.kind ? t(f.kind === 'government' ? 'jobs.typeGovt' : 'jobs.typeSchool') : '',
+    f.kind ? t(f.kind === 'government' ? 'jobs.typeGovt' : f.kind === 'external' ? 'jobs.typeExternal' : 'jobs.typeSchool') : '',
     ...n('posts', f.post), ...n('subjects', f.subject), ...n('schoolLevels', f.level), ...n('boards', f.board), ...n('mediums', f.medium),
     ...n('managementTypes', f.management), ...n('employmentTypes', f.employment),
     f.district ? nameOf(lookup, `districts:${f.district}`, locale) || f.district : '',

@@ -6,8 +6,18 @@ Fonts are self-hosted from `@fontsource` (Noto Sans + Noto Sans Devanagari, thre
 request goes to Google Fonts and Hindi renders on every phone.
 
 ## Data
-- `lib/server/persist.ts`: key → JSON collections in MySQL table `tst_kv` (plus `tst_blobs` for files
-  and `tst_meta` for a version counter), or `./data/db.json` when `DB_HOST` is not set.
+- `lib/server/persist.ts` + `lib/server/tables.ts`: in MySQL every kind of record has its own table, one row per
+  record: `tst_users`, `tst_schools`, `tst_jobs`, `tst_applications`, `tst_interviews`, `tst_offers`,
+  `tst_master_data`, `tst_audit_log`, `tst_import_items` … (29 tables). Each row has the record's `id`, readable
+  and indexed columns (email, school, job, stage, status, dates …, for browsing and SQL reports), the full
+  record as JSON in `data` (what the app reads), `seq` (insertion order) and `row_updated_at`. Saving writes
+  only the rows that changed, in one transaction; `tst_meta.version` tells other processes to reload. Files are
+  in `tst_blobs`, the UDISE+ directory in `tst_udise`. Without `DB_HOST` the same data lives in `./data/db.json`.
+- Upgrade from the first layout (each collection as one JSON value in `tst_kv`): the first start moves every
+  record into the tables automatically and keeps the old values in `tst_kv` as `backup-main:*` (safe to delete
+  once you are happy). `tst_settings.storage_layout` records when it happened.
+- `npm test` runs on the file store; `TST_TEST_DB=1 DB_HOST=… DB_NAME=<empty test database> npm test` runs the
+  same tests against MySQL / MariaDB.
 - `lib/server/db.ts`: `withDb(fn)` runs one operation at a time (in-process queue + MySQL `GET_LOCK`),
   gives typed collections (`users`, `sessions`, `tokens`, `otp`, `outbox`, `audit`, `master`, …) and
   saves only what changed. **Never call `withDb` inside another `withDb` callback** (it would wait for itself).
@@ -168,6 +178,28 @@ slots, panel scoring, offer letters, talent search, reports. Subscription gating
   vacancies and of applications (no contact details). Adapted from AcadeXMatch `app/institute/reports`.
 - **Data rights**: the candidate's export now includes interviews, offers and invitations; erasure removes them,
   the panel scores and notes about their applications.
+
+## Job import (brought forward from Phase 6)
+- **Sources** (`/admin/imports/sources`, `lib/server/importer.ts`): official recruitment pages, schools' careers
+  pages and RSS / Atom feeds, each with an employer name, optional state and a check interval. Suggested
+  official sources (NVS, KVS, CBSE, AWES, TN TRB, BPSC, AP DSC; `lib/importSuggestions.ts`) are added switched
+  off and marked VERIFY.
+- **Reading** (`lib/server/importFetch.ts`): identifies itself as `TheSchoolTeacherBot` (explained at `/bot`),
+  obeys robots.txt, reads only http(s) on ports 80/443, refuses private / local network addresses (also after
+  redirects), 20 s timeout, 3 MB limit. The scheduler reads due sources, 5 per 10-minute tick
+  (`TST_DISABLE_IMPORTS=1` turns this off); "Run now" reads one at once.
+- **Parsing** (`lib/importParse.ts`): links on HTML pages and items of feeds; keeps those that look like teacher
+  vacancies / recruitment notices (English, Hindi and post acronyms; results, admit cards and tenders are
+  dropped; careers pages keep any job on the same site). Finds a likely last date and post codes. Only the link,
+  its text and a few words around it are stored, de-duplicated by link + title; links already used by a listing
+  are marked duplicates.
+- **Review** (`/admin/imports`): new / published / duplicate / rejected, bulk reject. "Create listing" opens a
+  prefilled form (`/admin/listings/new`) where the admin checks the original and writes the summary.
+- **Listings** (`/admin/listings`): job kinds `government` (official notice) and `external` (a school's own
+  site), always "Apply on official site", with the source shown and a disclaimer that TheSchoolTeacher is not the
+  recruiter. They appear in search (type filter "Government notices" / "Other school sites"), alerts and SEO like
+  other vacancies, and can be closed or reopened.
+- Commercial job portals are deliberately not supported as sources (their terms forbid automated reading).
 
 ## Next phases
 2 Candidate core · 3 School core · 4 Hiring tools · 5 Money · 6 Government notices & growth · 7 Hardening

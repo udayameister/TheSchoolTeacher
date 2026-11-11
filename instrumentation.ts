@@ -1,6 +1,7 @@
 /*
  * Background jobs inside the web server (GoDaddy Node.js hosting has no separate cron):
- * job alerts, interview reminders and email retries every 10 minutes. TST_DISABLE_SCHEDULER=1 turns this off
+ * job alerts, interview reminders, the job importer (sources that are due) and email retries every 10 minutes.
+ * TST_DISABLE_IMPORTS=1 turns off only the importer. TST_DISABLE_SCHEDULER=1 turns this off
  * (e.g. when an external cron calls the admin endpoints instead).
  */
 export async function register() {
@@ -11,9 +12,11 @@ export async function register() {
   const { runJobAlerts } = await import('./lib/server/alerts');
   const { retryDueMail } = await import('./lib/server/mailer');
   const { runInterviewReminders } = await import('./lib/server/hiringEmails');
+  const { runDueImports } = await import('./lib/server/importer');
   const tick = async () => {
     try { await runJobAlerts(); } catch (e) { console.error('[TheSchoolTeacher] Job alerts failed:', (e as Error).message); }
     try { await runInterviewReminders(); } catch (e) { console.error('[TheSchoolTeacher] Interview reminders failed:', (e as Error).message); }
+    try { await runDueImports(); } catch (e) { console.error('[TheSchoolTeacher] Job import failed:', (e as Error).message); }
     try { await retryDueMail(); } catch (e) { console.error('[TheSchoolTeacher] Email retry failed:', (e as Error).message); }
   };
   setTimeout(tick, 60_000);

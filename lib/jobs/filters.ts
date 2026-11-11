@@ -36,7 +36,7 @@ export function parseFilters(src: ParamSource): JobFilters {
   const q = [getOne(src, 'q'), getOne(src, 'place')].filter(Boolean).join(' ').trim().slice(0, 120);
   if (q) f.q = q;
   const kind = getOne(src, 'type');
-  if (kind === 'government' || kind === 'school') f.kind = kind;
+  if (kind === 'government' || kind === 'school' || kind === 'external') f.kind = kind;
   for (const k of LIST_KEYS) {
     const vals = [...new Set(getAll(src, k).map(code).filter(Boolean))].slice(0, 20);
     if (vals.length) f[k] = vals;

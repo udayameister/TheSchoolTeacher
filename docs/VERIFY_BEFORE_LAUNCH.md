@@ -14,6 +14,7 @@ The admin dashboard shows how many items still carry the **VERIFY** flag.
 | States & UTs | 28 states + 8 UTs as of the seed date; Hindi names; **UDISE+ code prefixes** (seeded from the Census 2011 state codes, e.g. AP 28/37, Telangana 36; Ladakh left empty). The prefix only produces a warning, never a refusal. | Government of India / LGD; a few known UDISE+ codes per state |
 | UDISE+ directory | Not seeded. Import the school directory as CSV (Admin → UDISE+ directory) so registrations can be matched. | UDISE+ reports (udiseplus.gov.in) |
 | Districts, blocks | **Not seeded.** Import from the Local Government Directory as CSV (Admin → Master data → Districts → Import CSV; columns `code,name,nameHi,parentCode,lgdCode`, where `parentCode` is the state code such as `AP`). | lgdirectory.gov.in |
+| Suggested import sources | NVS, KVS, CBSE, AWES, TN TRB, BPSC and AP DSC addresses (Admin → Import sources → Suggested). Each is added switched off with a VERIFY badge: open it, replace a home page with the exact recruitment / notices page where one exists (KVS, CBSE), run it once and check the queue, then switch it on. | The official sites |
 | Legal pages | Terms, Privacy, Refund policy are drafts and show a "Draft" notice. Name a Grievance Officer (DPDP Act). | A lawyer |
 | Contact address | `CONTACT_EMAIL` defaults to info@theschoolteacher.in. | Your mailbox |
 

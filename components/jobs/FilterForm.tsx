@@ -48,7 +48,7 @@ export default function FilterForm({ f, facets, lists, t, locale, prefix, sort }
       </div>
       <fieldset>
         <legend className="label">{t('jobs.type')}</legend>
-        {[['', t('jobs.typeAll')], ['school', t('jobs.typeSchool')], ['government', t('jobs.typeGovt')]].map(([v, l]) => (
+        {[['', t('jobs.typeAll')], ['school', t('jobs.typeSchool')], ['government', t('jobs.typeGovt')], ['external', t('jobs.typeExternal')]].map(([v, l]) => (
           <label key={v} className="flex min-h-[36px] items-center gap-2 text-sm"><input type="radio" name="type" value={v} defaultChecked={(f.kind || '') === v} className="h-5 w-5" />{l}</label>
         ))}
       </fieldset>

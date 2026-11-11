@@ -31,6 +31,7 @@ export default function JobCard({ job, ctx }: { job: Job; ctx: CardCtx }) {
       </ul>
       <ul className="flex flex-wrap gap-1.5">
         {job.kind === 'government' && <li className="badge border-marigold-400 bg-marigold-50 text-marigold-800">{t('jobs.officialNotice')}</li>}
+        {job.kind === 'external' && <li className="badge border-line bg-ivory text-ink-soft">{t('jobs.externalListing')}</li>}
         {job.premium && <li className="badge border-brand-300 bg-brand-50 text-brand-800">{t('jobs.premium')}</li>}
         <li className="badge border-line bg-ivory text-ink">{nameOf(lookup, job.postId, locale)}</li>
         {job.boardIds.slice(0, 2).map(b => <li key={b} className="badge border-line bg-ivory text-ink">{nameOf(lookup, b, locale)}</li>)}

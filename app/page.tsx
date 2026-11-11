@@ -16,7 +16,7 @@ export default async function HomePage() {
     return {
       boards: listMaster(db, 'boards').filter(b => b.meta.scope !== 'state' && b.code !== 'OTHER'),
       states: listMaster(db, 'states'),
-      latest: open.filter(j => j.kind === 'school').slice(0, 6),
+      latest: open.filter(j => j.kind !== 'government').slice(0, 6),
       notices: open.filter(j => j.kind === 'government').slice(0, 4),
       lookup: lookupOf(db),
     };

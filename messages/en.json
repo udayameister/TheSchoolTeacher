@@ -298,7 +298,11 @@
     "copyLink": "Copy link",
     "copied": "Link copied",
     "resultCountOne": "1 vacancy",
-    "jumpToApply": "Apply / how to apply"
+    "jumpToApply": "Apply / how to apply",
+    "typeExternal": "Other school sites",
+    "externalListing": "Listed from the school’s site",
+    "externalDisclaimer": "This vacancy is published by {org} on its own website. TheSchoolTeacher only lists it: check the details there and apply on that site.",
+    "source": "Source"
   },
   "match": {
     "badge": "{score}% match",
