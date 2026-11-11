@@ -7,7 +7,7 @@ import { api } from '@/lib/clientApi';
 export function EmailPreferences({ unsubscribed, candidate }: { unsubscribed: string[]; candidate: boolean }) {
   const { t } = useI18n();
   const [off, setOff] = useState(new Set(unsubscribed));
-  const lists = candidate ? ['alerts', 'digest', 'news'] : ['news'];
+  const lists = candidate ? ['alerts', 'invites', 'digest', 'news'] : ['news'];
   return (
     <ul className="space-y-2">
       {lists.map(l => (

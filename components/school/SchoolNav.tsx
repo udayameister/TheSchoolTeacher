@@ -4,9 +4,13 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n/client';
 import { api } from '@/lib/clientApi';
 
-const TABS = [['/school', 'dashboard'], ['/school/jobs', 'jobs'], ['/school/applicants', 'applicants'], ['/school/profile', 'profile']] as const;
+const TABS = [
+  ['/school', 'dashboard'], ['/school/jobs', 'jobs'], ['/school/applicants', 'applicants'], ['/school/interviews', 'interviews'], ['/school/talent', 'talent'],
+  ['/school/offers', 'offers'], ['/school/reports', 'reports'], ['/school/team', 'team'], ['/school/profile', 'profile'],
+] as const;
 
-export default function SchoolNav({ schools, currentId, canAddBranch }: { schools: { id: string; name: string }[]; currentId: string | null; canAddBranch: boolean }) {
+/** `tabs`: the sections this person may use (decided on the server from their role). */
+export default function SchoolNav({ schools, currentId, canAddBranch, tabs }: { schools: { id: string; name: string }[]; currentId: string | null; canAddBranch: boolean; tabs: string[] }) {
   const { t } = useI18n();
   const path = usePathname();
   const router = useRouter();
@@ -14,7 +18,7 @@ export default function SchoolNav({ schools, currentId, canAddBranch }: { school
     <nav aria-label={t('school.navLabel')} className="border-b border-line bg-paper">
       <div className="container-page flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
         <ul className="flex gap-1 relative overflow-x-auto">
-          {TABS.map(([href, key]) => {
+          {TABS.filter(([, key]) => tabs.includes(key)).map(([href, key]) => {
             const active = href === '/school' ? path === href : path.startsWith(href);
             return <li key={href}><Link href={href} aria-current={active ? 'page' : undefined} className={`block whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold no-underline ${active ? 'bg-brand-700 text-white' : 'text-brand-800 hover:bg-brand-50'}`}>{t(`school.nav_${key}`)}</Link></li>;
           })}

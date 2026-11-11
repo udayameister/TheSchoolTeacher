@@ -54,6 +54,8 @@ export default async function ApplicationsPage() {
                 {ended && <p className="text-sm text-ink-soft">{t(`applications.ended_${a.stage}`)}</p>}
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   {job && <span className="text-sm text-ink-muted">{deadlineLabel(job.lastDate, t, locale).text}</span>}
+                  {a.stage === 'interview' && <Link href="/candidate/interviews" className="text-sm font-semibold">{t('applications.seeInterview')}</Link>}
+                  {(a.stage === 'offer' || a.stage === 'joined') && <Link href="/candidate/offers" className="text-sm font-semibold">{t('applications.seeOffer')}</Link>}
                   {WITHDRAWABLE.includes(a.stage) && <WithdrawButton id={a.id} title={job?.title || ''} />}
                 </div>
               </li>

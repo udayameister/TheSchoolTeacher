@@ -114,7 +114,7 @@ async function deliver(msg: Outgoing): Promise<string | undefined> {
 
 // ------------------------------------------------------------------ unsubscribe links
 
-export type MailList = 'alerts' | 'digest' | 'news' | 'outreach';
+export type MailList = 'alerts' | 'digest' | 'news' | 'outreach' | 'invites';
 
 export function unsubscribeToken(email: string, list: MailList): string {
   const data = Buffer.from(`${email.toLowerCase()}|${list}`).toString('base64url');
@@ -125,7 +125,7 @@ export function readUnsubscribeToken(token: string): { email: string; list: Mail
   const [data, sig] = String(token || '').split('.');
   if (!data || !sig || !safeEqual(sign(data, 'unsub'), sig)) return null;
   const [email, list] = Buffer.from(data, 'base64url').toString().split('|');
-  return email && ['alerts', 'digest', 'news', 'outreach'].includes(list) ? { email, list: list as MailList } : null;
+  return email && ['alerts', 'digest', 'news', 'outreach', 'invites'].includes(list) ? { email, list: list as MailList } : null;
 }
 
 export function unsubscribeUrl(email: string, list: MailList): string {

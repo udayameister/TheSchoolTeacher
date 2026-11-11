@@ -3,6 +3,8 @@ import { getT } from '@/lib/i18n/server';
 import { requireRole } from '@/lib/server/http';
 import { withDb } from '@/lib/server/db';
 import { currentSchool } from '@/lib/server/schools';
+import { canSeeApplication } from '@/lib/server/pipeline';
+import { can } from '@/lib/server/team';
 import { experienceYears } from '@/lib/jobs/match';
 import Pipeline, { type PipelineRow } from '@/components/school/Pipeline';
 import type { Stage } from '@/types';
@@ -18,7 +20,7 @@ export default async function Applicants({ searchParams }: { searchParams: Promi
     const jobs = db.jobs.filter(j => j.schoolId === school.id);
     const search = (q.q || '').trim().toLowerCase();
     const rows: PipelineRow[] = db.applications
-      .filter(a => a.schoolId === school.id && (!q.job || a.jobId === q.job) && (!q.stage || a.stage === q.stage) && (q.withdrawn === '1' || a.stage !== 'withdrawn'))
+      .filter(a => a.schoolId === school.id && canSeeApplication(db, user, a) && (!q.job || a.jobId === q.job) && (!q.stage || a.stage === q.stage) && (q.withdrawn === '1' || a.stage !== 'withdrawn'))
       .map(a => {
         const u = db.users.find(x => x.id === a.candidateId);
         const job = jobs.find(j => j.id === a.jobId);
@@ -28,7 +30,8 @@ export default async function Applicants({ searchParams }: { searchParams: Promi
       })
       .filter(r => !search || r.name.toLowerCase().includes(search))
       .sort((a, b) => (b.match ?? -1) - (a.match ?? -1) || b.appliedAt.localeCompare(a.appliedAt));
-    return { rows, jobs: jobs.map(j => ({ id: j.id, title: j.title })) };
+    const visibleJobs = new Set(rows.map(r => r.jobId));
+    return { rows, jobs: jobs.filter(j => can(user, 'pipeline') || visibleJobs.has(j.id)).map(j => ({ id: j.id, title: j.title })) };
   });
   if (!d) redirect('/school');
   return (
@@ -44,7 +47,8 @@ export default async function Applicants({ searchParams }: { searchParams: Promi
         <button className="btn-ghost">{t('ats.filter')}</button>
         <label className="flex items-center gap-2 text-sm sm:col-span-4"><input type="checkbox" name="withdrawn" value="1" defaultChecked={q.withdrawn === '1'} className="h-5 w-5" />{t('ats.showWithdrawn')}</label>
       </form>
-      <Pipeline rows={d.rows} initialView={q.view === 'list' ? 'list' : 'kanban'} />
+      {!can(user, 'pipeline') && <p className="alert-ok">{t('panel.onlyYourPanels')}</p>}
+      <Pipeline rows={d.rows} initialView={q.view === 'list' ? 'list' : 'kanban'} canMove={can(user, 'pipeline')} canInvite={can(user, 'interviews')} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getT } from '@/lib/i18n/server';
-import { requireRole } from '@/lib/server/http';
+import { requireSchoolPerm } from '@/lib/server/schoolPage';
 import { withDb } from '@/lib/server/db';
 import { canManageSchool } from '@/lib/server/schools';
 import { vacancyFormLists } from '@/lib/server/schoolLists';
@@ -10,7 +10,7 @@ export const metadata = { title: 'Edit vacancy' };
 
 export default async function EditJob({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await requireRole(['school_admin', 'school_staff'], `/school/jobs/${id}/edit`);
+  const user = await requireSchoolPerm('jobs', `/school/jobs/${id}/edit`);
   const { t } = await getT();
   const d = await withDb(db => {
     const job = db.jobs.find(j => j.id === id);

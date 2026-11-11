@@ -21,6 +21,9 @@ export function exportData(db: Store, userId: string) {
     savedJobs: db.savedJobs.filter(s => s.userId === userId),
     tracker: db.tracked.filter(t => t.userId === userId),
     jobAlerts: db.alerts.filter(a => a.userId === userId),
+    interviews: db.interviews.filter(i => i.candidateId === userId).map(i => ({ ...i, job: db.jobs.find(j => j.id === i.jobId)?.title ?? null, slot: db.slots.find(s => s.id === i.slotId) ?? null })),
+    offers: db.offers.filter(o => o.candidateId === userId),
+    invitationsToApply: db.talentInvites.filter(i => i.candidateId === userId).map(({ invitedBy, ...i }) => ({ ...i, job: db.jobs.find(j => j.id === i.jobId)?.title ?? null })),
     securityLog: db.audit.filter(a => a.actorId === userId).slice(0, 500),
   };
 }
@@ -30,7 +33,15 @@ export function eraseAccount(db: Store, userId: string, actorId: string): string
   const blobs = db.documents.filter(d => d.userId === userId).map(d => d.blobId);
   db.documents = db.documents.filter(d => d.userId !== userId);
   delete db.profiles[userId];
+  const appIds = new Set(db.applications.filter(a => a.candidateId === userId).map(a => a.id));
   db.applications = db.applications.filter(a => a.candidateId !== userId);
+  db.appNotes = db.appNotes.filter(n => !appIds.has(n.applicationId));
+  db.interviews = db.interviews.filter(i => i.candidateId !== userId);
+  db.offers = db.offers.filter(o => o.candidateId !== userId);
+  db.panelScores = db.panelScores.filter(s => !appIds.has(s.applicationId));
+  db.talentInvites = db.talentInvites.filter(i => i.candidateId !== userId);
+  // A school team member leaves every selection panel.
+  for (const j of db.jobs) if (j.panel?.some(p => p.userId === userId)) j.panel = j.panel.filter(p => p.userId !== userId);
   db.savedJobs = db.savedJobs.filter(s => s.userId !== userId);
   db.tracked = db.tracked.filter(t => t.userId !== userId);
   const alertIds = new Set(db.alerts.filter(a => a.userId === userId).map(a => a.id));
@@ -61,7 +72,7 @@ export function setMatchingConsent(db: Store, user: UserAccount, give: boolean):
   audit(db, { actorId: u.id, action: give ? 'privacy.matching_given' : 'privacy.matching_withdrawn', target: u.id });
 }
 
-export const EMAIL_LISTS = ['alerts', 'digest', 'news'] as const;
+export const EMAIL_LISTS = ['alerts', 'digest', 'news', 'invites'] as const;
 export type EmailList = (typeof EMAIL_LISTS)[number];
 
 export function setEmailPreference(db: Store, userId: string, list: EmailList, on: boolean): void {

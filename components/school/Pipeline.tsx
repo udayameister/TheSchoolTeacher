@@ -15,7 +15,7 @@ const PIPELINE: Stage[] = ['applied', 'screening', 'eligible', 'shortlisted', 'i
  * Applicant pipeline. Cards are moved with a "Move to" menu (works with keyboard and screen readers,
  * unlike drag-and-drop). Select several to move them together.
  */
-export default function Pipeline({ rows, initialView }: { rows: PipelineRow[]; initialView: 'kanban' | 'list' }) {
+export default function Pipeline({ rows, initialView, canMove = true, canInvite = false }: { rows: PipelineRow[]; initialView: 'kanban' | 'list'; canMove?: boolean; canInvite?: boolean }) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const [view, setView] = useState(initialView);
@@ -23,6 +23,8 @@ export default function Pipeline({ rows, initialView }: { rows: PipelineRow[]; i
   const [bulkStage, setBulkStage] = useState<Stage | ''>('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [inv, setInv] = useState({ kind: 'interview', demoTopic: '', demoClass: '', message: '' });
   const fmt = (iso: string) => new Date(iso).toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
   const byStage = useMemo(() => Object.fromEntries(PIPELINE.map(s => [s, rows.filter(r => r.stage === s)])), [rows]);
 
@@ -36,9 +38,16 @@ export default function Pipeline({ rows, initialView }: { rows: PipelineRow[]; i
     setSelected(new Set()); setBulkStage('');
     router.refresh();
   }
+  async function invite() {
+    setBusy(true);
+    const r = await api<{ created: number; skipped: number }>('/api/school/interviews', { action: 'invite', ids: [...selected], ...inv });
+    setBusy(false);
+    setMsg(r.ok ? { ok: true, text: t('interviews.invited', { n: r.created, skipped: r.skipped }) } : { ok: false, text: r.error ? t(r.error) : t('common.somethingWrong') });
+    if (r.ok) { setSelected(new Set()); setInviting(false); setInv({ kind: 'interview', demoTopic: '', demoClass: '', message: '' }); router.refresh(); }
+  }
   const toggle = (id: string) => setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
 
-  const moveSelect = (r: PipelineRow) => r.stage === 'withdrawn' ? <span className="text-xs text-ink-muted">{t('stages.withdrawn')}</span> : (
+  const moveSelect = (r: PipelineRow) => !canMove ? null : r.stage === 'withdrawn' ? <span className="text-xs text-ink-muted">{t('stages.withdrawn')}</span> : (
     <label className="block"><span className="sr-only">{t('ats.moveTo')} ({r.name})</span>
       <select className="input min-h-[36px] py-1 text-sm" value="" disabled={busy} onChange={e => e.target.value && move([r.id], e.target.value as Stage)}>
         <option value="">{t('ats.moveTo')}…</option>
@@ -66,10 +75,25 @@ export default function Pipeline({ rows, initialView }: { rows: PipelineRow[]; i
             <span className="text-sm font-semibold">{t('ats.selected', { n: selected.size })}</span>
             <label><span className="sr-only">{t('ats.moveTo')}</span><select className="input min-h-[36px] py-1 text-sm" value={bulkStage} onChange={e => setBulkStage(e.target.value as Stage)}><option value="">{t('ats.moveTo')}…</option>{PIPELINE.map(s => <option key={s} value={s}>{t(`stages.${s}`)}</option>)}</select></label>
             <button type="button" className="btn-primary min-h-[36px] py-1" disabled={!bulkStage || busy} onClick={() => bulkStage && move([...selected], bulkStage)}>{t('ats.apply')}</button>
-            <button type="button" className="text-sm font-semibold text-brand-700 underline" onClick={() => setSelected(new Set())}>{t('common.cancel')}</button>
+            {canInvite && <button type="button" className="btn-ghost min-h-[36px] py-1" aria-expanded={inviting} onClick={() => setInviting(v => !v)}>{t('interviews.inviteSelected')}</button>}
+            <button type="button" className="text-sm font-semibold text-brand-700 underline" onClick={() => { setSelected(new Set()); setInviting(false); }}>{t('common.cancel')}</button>
           </div>
         )}
       </div>
+      {inviting && selected.size > 0 && (
+        <form className="card grid gap-3 sm:grid-cols-2" onSubmit={e => { e.preventDefault(); invite(); }}>
+          <h2 className="text-lg font-bold sm:col-span-2">{t('interviews.inviteTitle', { n: selected.size })}</h2>
+          <label><span className="label">{t('interviews.kind')}</span>
+            <select className="input" value={inv.kind} onChange={e => setInv({ ...inv, kind: e.target.value })}><option value="interview">{t('interviews.kind_interview')}</option><option value="demo">{t('interviews.kind_demo')}</option></select></label>
+          {inv.kind === 'demo' ? <>
+            <label><span className="label">{t('interviews.demoTopic')}</span><input className="input" maxLength={200} value={inv.demoTopic} onChange={e => setInv({ ...inv, demoTopic: e.target.value })} /></label>
+            <label><span className="label">{t('interviews.demoClass')}</span><input className="input" maxLength={60} placeholder={t('interviews.demoClassHint')} value={inv.demoClass} onChange={e => setInv({ ...inv, demoClass: e.target.value })} /></label>
+          </> : <span />}
+          <label className="sm:col-span-2"><span className="label">{t('interviews.message')}</span><textarea className="input min-h-[70px]" maxLength={1000} value={inv.message} onChange={e => setInv({ ...inv, message: e.target.value })} /></label>
+          <p className="hint sm:col-span-2">{t('interviews.inviteHint')}</p>
+          <div className="sm:col-span-2"><button className="btn-primary" disabled={busy}>{t('interviews.sendInvites')}</button></div>
+        </form>
+      )}
       <div aria-live="polite">{msg && <p className={msg.ok ? 'alert-ok' : 'alert-error'}>{msg.text}</p>}</div>
 
       {!rows.length ? <p className="card text-ink-soft">{t('school.noApplicants')}</p> : view === 'kanban' ? (
@@ -82,14 +106,14 @@ export default function Pipeline({ rows, initialView }: { rows: PipelineRow[]; i
                   {byStage[s].map(r => (
                     <li key={r.id} className="rounded-lg border border-line bg-paper p-2 shadow-card">
                       <div className="flex items-start gap-2">
-                        <input type="checkbox" aria-label={`${t('ats.select')} ${r.name}`} className="mt-1 h-4 w-4 shrink-0" checked={selected.has(r.id)} onChange={() => toggle(r.id)} />
+                        {canMove && <input type="checkbox" aria-label={`${t('ats.select')} ${r.name}`} className="mt-1 h-4 w-4 shrink-0" checked={selected.has(r.id)} onChange={() => toggle(r.id)} />}
                         <div className="min-w-0">
                           <Link href={`/school/applicants/${r.id}`} className="block truncate font-semibold">{r.name}</Link>
                           <span className="block truncate text-xs text-ink-soft">{r.jobTitle}</span>
                           {meta(r)}
                         </div>
                       </div>
-                      <div className="mt-2">{moveSelect(r)}</div>
+                      {canMove && <div className="mt-2">{moveSelect(r)}</div>}
                     </li>
                   ))}
                   {!byStage[s].length && <li className="px-1 text-xs text-ink-muted">{t('ats.empty')}</li>}
@@ -102,13 +126,13 @@ export default function Pipeline({ rows, initialView }: { rows: PipelineRow[]; i
         <div className="relative overflow-x-auto rounded-xl border border-line bg-paper">
           <table className="table">
             <thead><tr>
-              <th scope="col"><input type="checkbox" aria-label={t('ats.selectAll')} className="h-4 w-4" checked={selected.size === rows.filter(r => r.stage !== 'withdrawn').length && selected.size > 0} onChange={e => setSelected(new Set(e.target.checked ? rows.filter(r => r.stage !== 'withdrawn').map(r => r.id) : []))} /></th>
+              <th scope="col">{canMove && <input type="checkbox" aria-label={t('ats.selectAll')} className="h-4 w-4" checked={selected.size === rows.filter(r => r.stage !== 'withdrawn').length && selected.size > 0} onChange={e => setSelected(new Set(e.target.checked ? rows.filter(r => r.stage !== 'withdrawn').map(r => r.id) : []))} />}</th>
               <th scope="col">{t('common.name')}</th><th scope="col">{t('jobs.post')}</th><th scope="col">{t('ats.stage')}</th><th scope="col">{t('ats.details')}</th><th scope="col"><span className="sr-only">{t('ats.moveTo')}</span></th>
             </tr></thead>
             <tbody>
               {rows.map(r => (
                 <tr key={r.id} className={r.stage === 'withdrawn' ? 'text-ink-muted' : ''}>
-                  <td>{r.stage !== 'withdrawn' && <input type="checkbox" aria-label={`${t('ats.select')} ${r.name}`} className="h-4 w-4" checked={selected.has(r.id)} onChange={() => toggle(r.id)} />}</td>
+                  <td>{canMove && r.stage !== 'withdrawn' && <input type="checkbox" aria-label={`${t('ats.select')} ${r.name}`} className="h-4 w-4" checked={selected.has(r.id)} onChange={() => toggle(r.id)} />}</td>
                   <td><Link href={`/school/applicants/${r.id}`} className="font-semibold">{r.name}</Link></td>
                   <td>{r.jobTitle}</td>
                   <td className="whitespace-nowrap">{t(`stages.${r.stage}`)}</td>

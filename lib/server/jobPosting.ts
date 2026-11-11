@@ -3,6 +3,10 @@ import type { Lookup } from '@/lib/jobs/filters';
 import { daysLeft, isIsoDate } from '@/lib/jobs/dates';
 import { audit, newId, nowIso, type Store } from './db';
 import { canManageSchool } from './schools';
+import { can } from './team';
+
+/** Vacancies need the "jobs" permission (panel-only staff cannot post or edit). */
+const canEditJobs = (db: Store, user: UserAccount, schoolId: string | null | undefined) => can(user, 'jobs') && canManageSchool(db, user, schoolId);
 
 /*
  * Vacancies posted by schools: server-side validation of the vacancy form, create / edit, publish /
@@ -95,7 +99,7 @@ export function saveJob(db: Store, user: UserAccount, input: Record<string, unkn
   const existing = typeof input.id === 'string' ? db.jobs.find(j => j.id === input.id) : undefined;
   if (input.id && !existing) return { error: 'post.errNotFound' };
   const schoolId = existing?.schoolId || (typeof input.schoolId === 'string' ? input.schoolId : '');
-  if (!canManageSchool(db, user, schoolId)) return { error: 'post.errNotFound' };
+  if (!canEditJobs(db, user, schoolId)) return { error: 'post.errNotFound' };
   const school = db.schools.find(s => s.id === schoolId)!;
   const { fields, error } = cleanJob(input, lookup);
   if (!fields) return { error };
@@ -132,7 +136,7 @@ export function saveJob(db: Store, user: UserAccount, input: Record<string, unkn
 /** Publish, close or reopen. Reopening needs a last date in the future. */
 export function setJobStatus(db: Store, user: UserAccount, jobId: string, status: JobStatus): SaveResult {
   const job = db.jobs.find(j => j.id === jobId);
-  if (!job || job.kind !== 'school' || !canManageSchool(db, user, job.schoolId)) return { error: 'post.errNotFound' };
+  if (!job || job.kind !== 'school' || !canEditJobs(db, user, job.schoolId)) return { error: 'post.errNotFound' };
   const school = db.schools.find(s => s.id === job.schoolId);
   if (status === 'published') {
     if (school?.verification !== 'verified') return { error: 'post.errNotVerified' };
@@ -149,7 +153,7 @@ export function setJobStatus(db: Store, user: UserAccount, jobId: string, status
 /** Copies a vacancy as a new draft ("Copy of …"), keeping everything except dates and counts. */
 export function duplicateJob(db: Store, user: UserAccount, jobId: string): SaveResult {
   const src = db.jobs.find(j => j.id === jobId);
-  if (!src || src.kind !== 'school' || !canManageSchool(db, user, src.schoolId)) return { error: 'post.errNotFound' };
+  if (!src || src.kind !== 'school' || !canEditJobs(db, user, src.schoolId)) return { error: 'post.errNotFound' };
   const at = nowIso();
   const copy: Job = { ...structuredClone(src), id: newId('job'), title: `${src.title}`.slice(0, 150), status: 'draft', publishedAt: null, createdAt: at, updatedAt: at, createdBy: user.id, views: 0 };
   copy.screeningQuestions = copy.screeningQuestions.map(q => ({ ...q, id: newId('sq') }));
@@ -161,7 +165,7 @@ export function duplicateJob(db: Store, user: UserAccount, jobId: string): SaveR
 /** Deletes a draft that never received applications. */
 export function deleteDraft(db: Store, user: UserAccount, jobId: string): string | null {
   const job = db.jobs.find(j => j.id === jobId);
-  if (!job || job.kind !== 'school' || !canManageSchool(db, user, job.schoolId)) return 'post.errNotFound';
+  if (!job || job.kind !== 'school' || !canEditJobs(db, user, job.schoolId)) return 'post.errNotFound';
   if (job.status !== 'draft' || db.applications.some(a => a.jobId === jobId)) return 'post.errDeleteDraftOnly';
   db.jobs = db.jobs.filter(j => j !== job);
   audit(db, { actorId: user.id, action: 'job.delete_draft', target: jobId });

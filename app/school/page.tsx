@@ -3,9 +3,11 @@ import { getT } from '@/lib/i18n/server';
 import { requireRole } from '@/lib/server/http';
 import { withDb } from '@/lib/server/db';
 import { currentSchool } from '@/lib/server/schools';
-import { PIPELINE } from '@/lib/server/pipeline';
+import { PIPELINE, canSeeApplication } from '@/lib/server/pipeline';
+import { istDateTime } from '@/lib/ics';
 import { isPast } from '@/lib/jobs/dates';
 import VerificationStatus from '@/components/school/VerificationStatus';
+import { can } from '@/lib/server/team';
 
 export default async function SchoolHome({ searchParams }: { searchParams: Promise<{ registered?: string; email?: string }> }) {
   const user = await requireRole(['school_admin', 'school_staff'], '/school');
@@ -14,7 +16,8 @@ export default async function SchoolHome({ searchParams }: { searchParams: Promi
     const school = currentSchool(db, user);
     if (!school) return null;
     const jobs = db.jobs.filter(j => j.schoolId === school.id);
-    const apps = db.applications.filter(a => a.schoolId === school.id && a.stage !== 'withdrawn');
+    const apps = db.applications.filter(a => a.schoolId === school.id && a.stage !== 'withdrawn' && canSeeApplication(db, user, a));
+    const now = new Date().toISOString();
     return {
       school,
       open: jobs.filter(j => j.status === 'published' && !isPast(j.lastDate)).length,
@@ -22,6 +25,9 @@ export default async function SchoolHome({ searchParams }: { searchParams: Promi
       views: jobs.reduce((s, j) => s + (db.jobViews[j.id] || 0), 0),
       byStage: Object.fromEntries(PIPELINE.map(s => [s, apps.filter(a => a.stage === s).length])),
       total: apps.length,
+      upcoming: can(user, 'interviews') ? db.interviews.filter(i => i.schoolId === school.id && i.status === 'booked').map(i => ({ i, slot: db.slots.find(x => x.id === i.slotId), name: db.users.find(u => u.id === i.candidateId)?.name || '—', job: jobs.find(j => j.id === i.jobId)?.title || '' }))
+        .filter(x => x.slot && x.slot.start >= now).sort((a, b) => a.slot!.start.localeCompare(b.slot!.start)).slice(0, 5) : [],
+      pendingOffers: can(user, 'offers') ? db.offers.filter(o => o.schoolId === school.id && o.status === 'issued').length : 0,
       recent: apps.sort((a, b) => b.appliedAt.localeCompare(a.appliedAt)).slice(0, 6).map(a => ({ a, name: db.users.find(u => u.id === a.candidateId)?.name || '', job: jobs.find(j => j.id === a.jobId)?.title || '' })),
     };
   });
@@ -45,7 +51,7 @@ export default async function SchoolHome({ searchParams }: { searchParams: Promi
           <h1 className="text-2xl font-bold">{d.school.name}</h1>
           <p className="text-sm text-ink-muted">{t('console.schoolTitle')} · UDISE+ {d.school.udiseCode}</p>
         </div>
-        <Link href="/school/jobs/new" className="btn-primary">{t('post.newVacancy')}</Link>
+        {can(user, 'jobs') && <Link href="/school/jobs/new" className="btn-primary">{t('post.newVacancy')}</Link>}
       </div>
       {q.registered && <p className="alert-ok" role="status">{t('school.registeredThanks')}</p>}
       {q.email === 'ok' && <p className="alert-ok" role="status">{t('school.emailConfirmed')}</p>}
@@ -68,6 +74,19 @@ export default async function SchoolHome({ searchParams }: { searchParams: Promi
           ))}
         </ol>
       </section>
+
+      {(d.upcoming.length > 0 || d.pendingOffers > 0) && (
+        <section className="card" aria-labelledby="up-h">
+          <h2 id="up-h" className="text-lg font-bold">{t('interviews.upcoming')}</h2>
+          {d.upcoming.length ? <ul className="mt-2 divide-y divide-line">{d.upcoming.map(({ i, slot, name, job }) => (
+            <li key={i.id} className="flex flex-wrap justify-between gap-2 py-2 text-sm">
+              <span><Link href={`/school/applicants/${i.applicationId}`} className="font-semibold">{name}</Link> · {t(`interviews.kind_${i.kind}`)} · {job}</span>
+              <span className="text-ink-muted">{istDateTime(slot!.start, locale)}</span>
+            </li>
+          ))}</ul> : <p className="mt-2 text-sm text-ink-soft">{t('interviews.noneUpcoming')}</p>}
+          {d.pendingOffers > 0 && <p className="mt-2 text-sm"><Link href="/school/offers">{t('offers.pendingCount', { n: d.pendingOffers })}</Link></p>}
+        </section>
+      )}
 
       <section className="card" aria-labelledby="recent-h">
         <h2 id="recent-h" className="text-lg font-bold">{t('school.recentApplicants')}</h2>

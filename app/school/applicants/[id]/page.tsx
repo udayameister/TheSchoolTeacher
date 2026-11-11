@@ -10,6 +10,10 @@ import { experienceYears, tetValid } from '@/lib/jobs/match';
 import { nameOf, namesOf } from '@/lib/jobs/display';
 import MatchExplain from '@/components/jobs/MatchExplain';
 import { Notes, StageControl } from '@/components/school/DossierActions';
+import { OfferPanel, ScoreForm } from '@/components/school/HiringPanels';
+import { can } from '@/lib/server/team';
+import { SCORABLE, dimensions, scoresFor } from '@/lib/server/panel';
+import { istDateTime } from '@/lib/ics';
 
 export const metadata = { title: 'Applicant' };
 
@@ -21,10 +25,19 @@ export default async function ApplicantPage({ params }: { params: Promise<{ id: 
     const d = dossier(db, user, id);
     // Viewing a candidate's personal data is logged (DPDP accountability).
     if (d) audit(db, { actorId: user.id, action: 'application.view', target: id });
-    return d ? { d, lookup: lookupOf(db) } : null;
+    if (!d) return null;
+    const lookup = lookupOf(db);
+    const school = db.schools.find(x => x.id === d.app.schoolId);
+    return {
+      d, lookup, scores: scoresFor(db, user, id),
+      dims: dimensions(db).map(x => ({ id: x.id, name: nameOf(lookup, x.id, locale), weight: Number(x.meta.weight) || 0 })),
+      interviews: db.interviews.filter(i => i.applicationId === id).map(i => ({ ...i, slot: i.slotId ? db.slots.find(x => x.id === i.slotId) || null : null })).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      offers: can(user, 'offers') ? db.offers.filter(o => o.applicationId === id).sort((a, b) => b.issuedAt.localeCompare(a.issuedAt)) : [],
+      hasSignatory: !!school?.offerSignatory,
+    };
   });
   if (!r) notFound();
-  const { d, lookup } = r;
+  const { d, lookup, scores } = r;
   const p = d.profile;
   const fmt = (iso: string) => new Date(iso).toLocaleDateString(locale === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
   const row = (label: string, value: React.ReactNode) => value ? <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-2"><dt className="text-sm font-semibold text-ink-soft">{label}</dt><dd className="sm:col-span-2">{value}</dd></div> : null;
@@ -94,7 +107,46 @@ export default async function ApplicantPage({ params }: { params: Promise<{ id: 
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-          <section className="card" aria-labelledby="stage-h"><h2 id="stage-h" className="mb-2 text-lg font-bold">{t('ats.stage')}</h2><StageControl id={d.app.id} stage={d.app.stage} /></section>
+          {can(user, 'pipeline')
+            ? <section className="card" aria-labelledby="stage-h"><h2 id="stage-h" className="mb-2 text-lg font-bold">{t('ats.stage')}</h2><StageControl id={d.app.id} stage={d.app.stage} /></section>
+            : <section className="card"><h2 className="text-lg font-bold">{t('ats.stage')}</h2><p className="mt-1">{t(`stages.${d.app.stage}`)}</p></section>}
+          {scores?.isMember && (
+            <section className="card" aria-labelledby="score-h"><h2 id="score-h" className="mb-2 text-lg font-bold">{t('panel.yourScore')}</h2>
+              <ScoreForm applicationId={d.app.id} dims={r.dims} mine={scores.mine} canScore={SCORABLE.has(d.app.stage)} /></section>
+          )}
+          {scores?.all && scores.all.length > 0 && (
+            <section className="card" aria-labelledby="scores-h">
+              <h2 id="scores-h" className="text-lg font-bold">{t('panel.allScores')}</h2>
+              <p className="text-sm text-ink-soft">{t('panel.average')}: <span className="font-bold text-ink">{Math.round((scores.all.reduce((s, x) => s + x.total, 0) / scores.all.length) * 10) / 10}</span> · {t('panel.scoredBy', { n: scores.all.length, of: scores.panelSize })}</p>
+              <ul className="mt-2 divide-y divide-line text-sm">{scores.all.map(s => (
+                <li key={s.id} className="py-2">
+                  <p><span className="font-semibold">{s.memberName}</span> <span className="text-ink-muted">({t(`panel.role_${s.panelRole}`)})</span> · <span className="font-bold">{s.total}</span> · {t(`panel.rec_${s.recommendation}`)}</p>
+                  <p className="text-xs text-ink-muted">{r.dims.map(x => `${x.name}: ${s.marks[x.id] ?? '—'}`).join(' · ')}</p>
+                  {s.comments && <p className="mt-1 whitespace-pre-line">{s.comments}</p>}
+                </li>
+              ))}</ul>
+              <p className="hint">{t('panel.confidentialAll')}</p>
+              <Link href={`/school/jobs/${d.job.id}/panel`} className="mt-1 inline-block text-sm font-semibold">{t('panel.ranking')}</Link>
+            </section>
+          )}
+          {r.interviews.length > 0 && (
+            <section className="card" aria-labelledby="ivs-h">
+              <h2 id="ivs-h" className="text-lg font-bold">{t('interviews.title')}</h2>
+              <ul className="mt-2 space-y-2 text-sm">{r.interviews.map(i => (
+                <li key={i.id}>
+                  <p><span className="font-semibold">{t(`interviews.kind_${i.kind}`)}</span> · {t(`interviews.status_${i.status}`)}</p>
+                  {i.slot && <p className="text-ink-soft">{istDateTime(i.slot.start, locale)} · {t(`interviews.mode_${i.slot.mode}`)}</p>}
+                  {i.kind === 'demo' && (i.demoTopic || i.demoClass) && <p className="text-ink-soft">{i.demoTopic}{i.demoClass ? ` (${i.demoClass})` : ''}</p>}
+                  {i.demoVideoUrl && <a href={i.demoVideoUrl} target="_blank" rel="noopener noreferrer nofollow">{t('interviews.demoVideo')}</a>}
+                </li>
+              ))}</ul>
+              {can(user, 'interviews') && <Link href={`/school/interviews?job=${d.job.id}`} className="mt-2 inline-block text-sm font-semibold">{t('interviews.manage')}</Link>}
+            </section>
+          )}
+          {can(user, 'offers') && (
+            <section className="card" aria-labelledby="offer-h"><h2 id="offer-h" className="mb-2 text-lg font-bold">{t('offers.title')}</h2>
+              <OfferPanel applicationId={d.app.id} jobTitle={d.job.title} offers={r.offers} hasSignatory={r.hasSignatory} stage={d.app.stage} /></section>
+          )}
           {d.match ? <MatchExplain m={d.match} t={t} /> : <p className="card text-sm text-ink-soft">{t('ats.noMatch')}</p>}
           <section className="card" aria-labelledby="hist-h">
             <h2 id="hist-h" className="text-lg font-bold">{t('ats.history')}</h2>

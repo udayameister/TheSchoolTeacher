@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getT } from '@/lib/i18n/server';
-import { requireRole } from '@/lib/server/http';
+import { requireSchoolPerm } from '@/lib/server/schoolPage';
 import { withDb } from '@/lib/server/db';
 import { currentSchool } from '@/lib/server/schools';
 import { lookupOf } from '@/lib/server/catalog';
@@ -12,7 +12,7 @@ import JobActions from '@/components/school/JobActions';
 export const metadata = { title: 'Vacancies' };
 
 export default async function SchoolJobs({ searchParams }: { searchParams: Promise<{ status?: string; saved?: string }> }) {
-  const user = await requireRole(['school_admin', 'school_staff'], '/school/jobs');
+  const user = await requireSchoolPerm('jobs', '/school/jobs');
   const [{ t, locale }, q] = await Promise.all([getT(), searchParams]);
   const d = await withDb(db => {
     const school = currentSchool(db, user);
@@ -59,7 +59,7 @@ export default async function SchoolJobs({ searchParams }: { searchParams: Promi
                   </div>
                   <span className={`badge self-start ${tone[st]}`}>{t(`post.status_${st}`)}</span>
                 </div>
-                <p className="text-sm">{t('post.stats', { views, apps, fresh })}</p>
+                <p className="text-sm">{t('post.stats', { views, apps, fresh })}{j.status !== 'draft' && <> · <Link href={`/school/jobs/${j.id}/panel`}>{t('panel.panelAndRanking')}</Link>{(j.panel?.length || 0) > 0 && <span className="text-ink-muted"> ({t('panel.members', { n: j.panel!.length })})</span>}</>}</p>
                 <JobActions id={j.id} status={j.status} canPublish={verified} canDelete={j.status === 'draft' && !everApplied} />
               </li>
             );

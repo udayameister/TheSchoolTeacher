@@ -132,6 +132,43 @@ demo-video links (Phase 4), interview preparation (§4.10), offer letters (Phase
 Deferred to Phase 4 as planned: staff accounts with roles (HR, Principal, panel members), interviews and demo
 slots, panel scoring, offer letters, talent search, reports. Subscription gating of posting comes in Phase 5.
 
+## Phase 4: Hiring tools
+- **Team and roles** (`lib/server/team.ts`, `/school/team`, `/join`): the school administrator invites staff by
+  email with a role: Principal, HR / office, Coordinator or Panel member only. The invitation link (7 days,
+  one use, only its digest stored) is also shown to the administrator so it can be shared while email is not
+  set up. Accepting creates a verified `school_staff` account (a candidate's email cannot be turned into staff).
+  `can(user, perm)` decides access on the server; API routes, pages (`requireSchoolPerm`) and the console tabs
+  use it. Panel-only staff see just the applicants of vacancies whose panel they sit on. Removing a member ends
+  their sessions and takes them off every panel.
+- **Interviews and demo classes** (`lib/server/interviews.ts`, `/school/interviews`, `/candidate/interviews`):
+  slots per vacancy (in person, Google Meet, Teams, phone; capacity per slot; times entered in IST, stored UTC).
+  Staff invite applicants from the pipeline (bulk "Invite to interview / demo", with demo topic and class); the
+  application moves to "Demo / interview". Candidates book, change or cancel up to 2 hours before, download an
+  .ics (`/api/interviews/[id]/ics`, reminders built in) and can add a demo-video link (https). Reminder emails
+  1 day and 1 hour before run from the scheduler (`runInterviewReminders`). Deleting a booked slot emails the
+  candidate to rebook. Adapted from AcadeXMatch `components/InterviewScheduleModal.tsx`, `lib/ics.ts`.
+- **Selection panel** (`lib/server/panel.ts`, `/school/jobs/[id]/panel`, dossier): a panel per vacancy from the
+  team, each with a panel role. Members give marks 0–10 per admin-editable dimension; the weighted total
+  (weights normalised, snapshot kept with the score) is out of 100. Members see only their own scores;
+  Principal, HR and the administrator see all scores and the ranking (average of totals). The audit log records
+  that a score was saved, never the marks or comments. Adapted from AcadeXMatch
+  `components/SelectionCommitteeModal.tsx` (which stored scores in the browser) and `lib/scoring.ts`.
+- **Offer letters** (`lib/offerLetter.ts`, `lib/server/offers.ts`, `/school/offers`, `/candidate/offers`): a
+  template with merge fields and a signatory per school; issue from the dossier with a preview; the letter is
+  frozen at issue time. One open offer per application. The candidate reads (printable page) and accepts or
+  declines with a note by the answer-by date; the school is emailed. The school can withdraw an unanswered
+  offer. Adapted from AcadeXMatch `lib/offerLetter.ts`, `components/OfferModal.tsx`, `app/offer/[id]`.
+- **Talent search** (`lib/server/talent.ts`, `/school/talent`): only candidates with a discoverable profile and
+  matching consent; filters by subject, class level, valid TET, qualification, medium, state / district (home or
+  preferred) and experience. No contact details, phone, salary or documents. Invite to an open vacancy (once per
+  vacancy, never after applying, 100 per school per day); candidates can unsubscribe from the "invites" list.
+  Searches and invitations are audited. Adapted from AcadeXMatch `app/api/talent/route.ts`.
+- **Reports** (`lib/server/reports.ts`, `/school/reports`): funnel (reached each stage or later), time to hire
+  (median and average), offers, interviews and a by-vacancy table for 30 / 90 / 365 days or all time; CSV of
+  vacancies and of applications (no contact details). Adapted from AcadeXMatch `app/institute/reports`.
+- **Data rights**: the candidate's export now includes interviews, offers and invitations; erasure removes them,
+  the panel scores and notes about their applications.
+
 ## Next phases
 2 Candidate core · 3 School core · 4 Hiring tools · 5 Money · 6 Government notices & growth · 7 Hardening
 (see the build prompt). AcadeXMatch modules earmarked for reuse: resume parser/checker/builder, ATS

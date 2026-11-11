@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getT } from '@/lib/i18n/server';
-import { requireRole } from '@/lib/server/http';
+import { requireSchoolPerm } from '@/lib/server/schoolPage';
 import { withDb } from '@/lib/server/db';
 import { currentSchool } from '@/lib/server/schools';
 import { vacancyFormLists } from '@/lib/server/schoolLists';
@@ -9,7 +9,7 @@ import VacancyForm from '@/components/school/VacancyForm';
 export const metadata = { title: 'Post a vacancy' };
 
 export default async function NewJob() {
-  const user = await requireRole(['school_admin', 'school_staff'], '/school/jobs/new');
+  const user = await requireSchoolPerm('jobs', '/school/jobs/new');
   const { t } = await getT();
   const d = await withDb(db => ({ school: currentSchool(db, user), lists: vacancyFormLists(db) }));
   if (!d.school) redirect('/school');

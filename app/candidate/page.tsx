@@ -8,6 +8,8 @@ import { computeMatch } from '@/lib/jobs/match';
 import { daysLeft, isPast } from '@/lib/jobs/dates';
 import JobCard from '@/components/jobs/JobCard';
 import Meter from '@/components/candidate/Meter';
+import { candidateInvites } from '@/lib/server/talent';
+import { isExpired } from '@/lib/server/offers';
 
 export default async function CandidateHome() {
   const user = await requireRole(['candidate'], '/candidate');
@@ -30,6 +32,10 @@ export default async function CandidateHome() {
         .filter(x => { const n = daysLeft(x.lastDate); return n !== null && n >= 0 && n <= 14; }).sort((a, b) => (a.lastDate || '').localeCompare(b.lastDate || '')).slice(0, 5),
       saved: new Set(db.savedJobs.filter(s => s.userId === user.id).map(s => s.jobId)),
       alerts: db.alerts.filter(a => a.userId === user.id).length,
+      invites: candidateInvites(db, user).filter(x => !x.applied).slice(0, 5),
+      toBook: db.interviews.filter(i => i.candidateId === user.id && i.status === 'invited').length,
+      booked: db.interviews.filter(i => i.candidateId === user.id && i.status === 'booked' && (db.slots.find(s => s.id === i.slotId)?.start || '') >= new Date().toISOString()).length,
+      offers: db.offers.filter(o => o.candidateId === user.id && o.status === 'issued' && !isExpired(o)).length,
     };
   });
   const active = d.apps.filter(a => a.stage !== 'withdrawn' && a.stage !== 'not_selected').length;
@@ -53,6 +59,28 @@ export default async function CandidateHome() {
           <p><Link href="/candidate/alerts" className="text-2xl font-bold">{d.alerts}</Link> <span className="text-ink-soft">{t('candidate.jobAlerts')}</span></p>
         </section>
       </div>
+
+      {(d.toBook > 0 || d.booked > 0 || d.offers > 0) && (
+        <section className="card space-y-1 border-marigold-400" aria-labelledby="act-h">
+          <h2 id="act-h" className="text-lg font-bold">{t('candidate.actionNeeded')}</h2>
+          {d.offers > 0 && <p><Link href="/candidate/offers" className="font-semibold">{t('candidate.offersWaiting', { n: d.offers })}</Link></p>}
+          {d.toBook > 0 && <p><Link href="/candidate/interviews" className="font-semibold">{t('candidate.interviewsToBook', { n: d.toBook })}</Link></p>}
+          {d.booked > 0 && <p><Link href="/candidate/interviews">{t('candidate.interviewsBooked', { n: d.booked })}</Link></p>}
+        </section>
+      )}
+
+      {d.invites.length > 0 && (
+        <section className="card" aria-labelledby="inv-h">
+          <h2 id="inv-h" className="text-lg font-bold">{t('candidate.invitations')}</h2>
+          <p className="text-sm text-ink-soft">{t('candidate.invitationsHint')}</p>
+          <ul className="mt-2 divide-y divide-line">{d.invites.map(x => (
+            <li key={x.invite.id} className="py-2 text-sm">
+              <Link href={`/jobs/${x.job.id}`} className="font-semibold">{x.job.title}</Link> · {x.job.orgName}
+              {x.invite.message && <p className="mt-1 whitespace-pre-line text-ink-soft">“{x.invite.message}”</p>}
+            </li>
+          ))}</ul>
+        </section>
+      )}
 
       {d.deadlines.length > 0 && (
         <section className="card" aria-labelledby="dl-h">

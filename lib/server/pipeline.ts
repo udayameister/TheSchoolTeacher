@@ -5,6 +5,7 @@ import { lookupOf, matchWeights, matchingAllowed } from './catalog';
 import { computeMatch, type MatchResult } from '@/lib/jobs/match';
 import { docView, type DocView } from './documents';
 import { NOTIFY_STAGES } from './schoolEmails';
+import { can } from './team';
 
 /*
  * The school's applicant pipeline (ATS): Applied → Screening → Eligible → Shortlisted → Demo / Interview →
@@ -15,19 +16,31 @@ import { NOTIFY_STAGES } from './schoolEmails';
 
 export const PIPELINE: Stage[] = ['applied', 'screening', 'eligible', 'shortlisted', 'interview', 'panel_review', 'offer', 'joined', 'not_selected'];
 
+/** Is the user on the selection panel of this vacancy? */
+export const onPanel = (job: Job | undefined, userId: string) => !!job?.panel?.some(p => p.userId === userId);
+
+/**
+ * Applications the user may see: all of their schools' applications with the "pipeline" permission;
+ * otherwise (panel members) only those for vacancies whose selection panel they sit on.
+ */
 export function schoolApplications(db: Store, user: UserAccount): Application[] {
   const mine = new Set(managedSchools(db, user).map(s => s.id));
-  return db.applications.filter(a => !!a.schoolId && mine.has(a.schoolId));
+  const all = db.applications.filter(a => !!a.schoolId && mine.has(a.schoolId));
+  if (can(user, 'pipeline')) return all;
+  const panelJobs = new Set(db.jobs.filter(j => onPanel(j, user.id)).map(j => j.id));
+  return all.filter(a => panelJobs.has(a.jobId));
 }
 
 export function canSeeApplication(db: Store, user: UserAccount, app: Application | undefined): app is Application {
-  return !!app && !!app.schoolId && managedSchools(db, user).some(s => s.id === app.schoolId);
+  if (!app || !app.schoolId || !managedSchools(db, user).some(s => s.id === app.schoolId)) return false;
+  return can(user, 'pipeline') || onPanel(db.jobs.find(j => j.id === app.jobId), user.id);
 }
 
 export interface StageChange { app: Application; candidate: UserAccount; job: Job }
 
 /** Moves one or more applications. Returns the changes to email about, or an error key. */
 export function moveStage(db: Store, user: UserAccount, appIds: string[], stage: Stage, note: string | null): { changed: StageChange[]; moved: number; error?: string } {
+  if (!can(user, 'pipeline')) return { changed: [], moved: 0, error: 'team.errPermission' };
   if (!PIPELINE.includes(stage)) return { changed: [], moved: 0, error: 'ats.errStage' };
   const ids = [...new Set(appIds)].slice(0, 200);
   const apps = ids.map(id => db.applications.find(a => a.id === id));

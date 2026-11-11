@@ -5,7 +5,7 @@ import { useI18n } from '@/lib/i18n/client';
 
 const TABS = [
   ['/candidate', 'dashboard'], ['/candidate/profile', 'profile'], ['/candidate/documents', 'documents'], ['/candidate/applications', 'applications'],
-  ['/candidate/saved', 'saved'], ['/candidate/tracker', 'tracker'], ['/candidate/alerts', 'alerts'],
+  ['/candidate/interviews', 'interviews'], ['/candidate/offers', 'offers'], ['/candidate/saved', 'saved'], ['/candidate/tracker', 'tracker'], ['/candidate/alerts', 'alerts'],
 ] as const;
 
 export default function CandidateNav() {

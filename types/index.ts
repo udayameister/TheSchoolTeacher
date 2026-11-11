@@ -4,6 +4,9 @@
  */
 
 export type Role = 'candidate' | 'school_admin' | 'school_staff' | 'platform_admin';
+/** What a school_staff member may do (the school_admin may do everything). See lib/server/team.ts. */
+export type StaffRole = 'principal' | 'hr' | 'coordinator' | 'panel';
+export const STAFF_ROLES: StaffRole[] = ['principal', 'hr', 'coordinator', 'panel'];
 export const ROLES: Role[] = ['candidate', 'school_admin', 'school_staff', 'platform_admin'];
 
 export type AccountStatus = 'active' | 'suspended';
@@ -37,6 +40,8 @@ export interface UserAccount {
   phoneVerified?: boolean;
   /** For school_admin / school_staff: the school the account is working on (a group admin can switch branches). */
   schoolId?: string | null;
+  /** For school_staff: their role in the school (decides which parts of the school console they can use). */
+  staffRole?: StaffRole | null;
   /** For the administrator of a school group / trust: every school with this groupId can be managed. */
   groupId?: string | null;
   identities?: LinkedIdentity[];
@@ -178,6 +183,10 @@ export interface School {
   about?: string | null;
   facilityIds: string[];
   photos: SchoolPhoto[];
+  /** Offer-letter template with {merge fields}; empty = the default template. */
+  offerTemplate?: string | null;
+  /** Who signs offer letters. */
+  offerSignatory?: { name: string; designation: string } | null;
   verification: VerificationStatus;
   verificationNote?: string | null;
   submittedAt?: string | null;
@@ -282,8 +291,13 @@ export interface Job {
   updatedAt: string;
   createdBy?: string | null;
   views: number;
+  /** Selection panel for this vacancy: staff members who score applicants (confidentially). */
+  panel?: PanelMember[];
   demo?: boolean;
 }
+
+export type PanelRole = 'principal' | 'coordinator' | 'subject_expert' | 'management_nominee' | 'other';
+export interface PanelMember { userId: string; role: PanelRole }
 
 // ------------------------------------------------------------------ candidates
 
@@ -412,4 +426,121 @@ export interface JobAlert {
   createdAt: string;
   lastSentAt?: string | null;
   lastSentCount?: number | null;
+}
+
+// ------------------------------------------------------------------ hiring tools (Phase 4)
+
+/** An invitation for someone to join a school's team; only the digest of the link token is stored. */
+export interface StaffInvite {
+  id: string;
+  schoolId: string;
+  email: string;
+  name: string;
+  staffRole: StaffRole;
+  tokenDigest: string;
+  invitedBy: string;
+  createdAt: string;
+  expiresAt: string;
+  acceptedAt?: string | null;
+}
+
+export type InterviewMode = 'in_person' | 'google_meet' | 'teams' | 'phone';
+export type InterviewKind = 'interview' | 'demo';
+
+/** A time a school offers for interviews or demo classes for one vacancy. Times are stored in UTC. */
+export interface InterviewSlot {
+  id: string;
+  schoolId: string;
+  jobId: string;
+  kind: InterviewKind;
+  start: string;
+  durationMin: number;
+  mode: InterviewMode;
+  /** Address / room for in-person, meeting link for online, number for phone. */
+  location: string;
+  /** How many candidates can book this slot (1 for one-to-one). */
+  capacity: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+export type InterviewStatus = 'invited' | 'booked' | 'cancelled' | 'completed' | 'no_show';
+
+/** One candidate's interview / demo class for one application. */
+export interface Interview {
+  id: string;
+  applicationId: string;
+  schoolId: string;
+  jobId: string;
+  candidateId: string;
+  kind: InterviewKind;
+  status: InterviewStatus;
+  slotId?: string | null;
+  /** Demo class requested by the school. */
+  demoTopic?: string | null;
+  demoClass?: string | null;
+  /** Link to a short demo video the candidate shares (YouTube, Drive, …). */
+  demoVideoUrl?: string | null;
+  message?: string | null;
+  /** Reminder emails already sent: "1d" and "1h". */
+  reminders: string[];
+  invitedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type Recommendation = 'strongly_recommend' | 'recommend' | 'reservations' | 'not_recommend';
+
+/** One panel member's confidential score for one applicant. */
+export interface PanelScore {
+  id: string;
+  applicationId: string;
+  jobId: string;
+  schoolId: string;
+  memberId: string;
+  panelRole: PanelRole;
+  /** Marks out of 10 per score dimension (master-data id). */
+  marks: Record<string, number>;
+  /** The dimension weights when the score was saved, so later weight changes do not change past scores. */
+  weights: Record<string, number>;
+  /** Weighted total out of 100. */
+  total: number;
+  recommendation: Recommendation;
+  comments?: string | null;
+  submittedAt: string;
+  updatedAt: string;
+}
+
+export type OfferStatus = 'issued' | 'accepted' | 'declined' | 'withdrawn';
+
+export interface Offer {
+  id: string;
+  applicationId: string;
+  schoolId: string;
+  jobId: string;
+  candidateId: string;
+  designation: string;
+  pay: string;
+  joiningDate: string;
+  acceptBy: string;
+  reportTo?: string | null;
+  /** The letter as issued (the template filled in); it does not change if the template changes later. */
+  letter: string;
+  signatory: { name: string; designation: string };
+  status: OfferStatus;
+  issuedBy: string;
+  issuedAt: string;
+  respondedAt?: string | null;
+  responseNote?: string | null;
+}
+
+/** A school invited a discoverable candidate to apply for a vacancy. */
+export interface TalentInvite {
+  id: string;
+  schoolId: string;
+  jobId: string;
+  candidateId: string;
+  message?: string | null;
+  invitedBy: string;
+  at: string;
 }

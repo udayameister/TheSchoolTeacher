@@ -53,7 +53,15 @@ describe('i18n keys used in code', () => {
       ...['shortlisted', 'interview', 'not_selected'].flatMap(s => ['subject', 'heading', 'body'].map(p => `emails.stage_${s}_${p}`)),
       ...['published', 'draft', 'closed', 'expired'].map(s => `post.status_${s}`), ...['range', 'cpc', 'state_scale', 'not_disclosed'].map(s => `post.pay_${s}`),
       ...['teaching', 'leadership', 'non_teaching'].map(s => `post.cat_${s}`), ...['yesno', 'text', 'number'].map(s => `post.type_${s}`),
-      ...['dashboard', 'jobs', 'applicants', 'profile'].map(s => `school.nav_${s}`), ...['QUAL_TET', 'SUBJECT_CLASS', 'EXPERIENCE', 'MEDIUM', 'LOCATION', 'SALARY'].map(s => `match.part_${s}`),
+      ...['dashboard', 'jobs', 'applicants', 'interviews', 'talent', 'offers', 'reports', 'team', 'profile'].map(s => `school.nav_${s}`),
+      ...['interviews', 'offers'].map(s => `candidate.nav_${s}`), ...['alerts', 'invites', 'digest', 'news'].flatMap(s => [`privacy.list_${s}`, `privacy.list_${s}_hint`]),
+      ...['school_admin', 'principal', 'hr', 'coordinator', 'panel'].flatMap(s => [`team.role_${s}`, `team.roleHint_${s}`]),
+      ...['interview', 'demo'].map(s => `interviews.kind_${s}`), ...['in_person', 'google_meet', 'teams', 'phone'].map(s => `interviews.mode_${s}`),
+      ...['invited', 'booked', 'completed', 'no_show', 'cancelled'].map(s => `interviews.status_${s}`),
+      ...['principal', 'coordinator', 'subject_expert', 'management_nominee', 'other'].map(s => `panel.role_${s}`),
+      ...['strongly_recommend', 'recommend', 'reservations', 'not_recommend'].map(s => `panel.rec_${s}`),
+      ...['issued', 'accepted', 'declined', 'withdrawn', 'expired'].map(s => `offers.status_${s}`), ...['accepted', 'declined'].map(s => `offers.answered_${s}`),
+      ...['Accepted', 'Declined'].flatMap(s => ['Subject', 'Heading', 'Body'].map(p => `emails.offer${s}${p}`)), 'emails.reminder1d', 'emails.reminder1h', ...['QUAL_TET', 'SUBJECT_CLASS', 'EXPERIENCE', 'MEDIUM', 'LOCATION', 'SALARY'].map(s => `match.part_${s}`),
       ...['photo', 'qualification', 'tet', 'experience', 'id_proof', 'police_verification', 'pocso', 'other'].map(s => `documents.cat_${s}`),
     ];
     eq(need.filter(k => !(k in E)), []);

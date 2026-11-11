@@ -3,6 +3,7 @@ import { withDb } from '@/lib/server/db';
 import { managedSchools } from '@/lib/server/schools';
 import VerifyEmailBanner from '@/components/account/VerifyEmailBanner';
 import SchoolNav from '@/components/school/SchoolNav';
+import { schoolTabs } from '@/lib/server/schoolPage';
 
 export const metadata = { robots: { index: false } };
 
@@ -11,7 +12,7 @@ export default async function SchoolLayout({ children }: { children: React.React
   const schools = await withDb(db => managedSchools(db, user).map(s => ({ id: s.id, name: s.name })));
   return (
     <>
-      <SchoolNav schools={schools} currentId={user.schoolId ?? null} canAddBranch={user.role === 'school_admin' && !!user.groupId} />
+      <SchoolNav schools={schools} currentId={user.schoolId ?? null} canAddBranch={user.role === 'school_admin' && !!user.groupId} tabs={schoolTabs(user)} />
       <VerifyEmailBanner user={user} />
       {children}
     </>
