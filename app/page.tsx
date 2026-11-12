@@ -7,6 +7,7 @@ import { listMaster } from '@/lib/server/masterData';
 import { lookupOf, publicJobs } from '@/lib/server/catalog';
 import { isPast } from '@/lib/jobs/dates';
 import { deadlineLabel, placeLabel } from '@/lib/jobs/display';
+import { SITE_NAME, SITE_URL, absoluteUrl } from '@/lib/site';
 
 export default async function HomePage() {
   const { t, locale } = await getT();
@@ -23,8 +24,13 @@ export default async function HomePage() {
   });
   const faqs = [1, 2, 3, 4].map(n => ({ q: t(`home.faq${n}q`), a: t(`home.faq${n}a`) }));
 
+  const orgLd = {
+    '@context': 'https://schema.org', '@type': 'Organization', name: SITE_NAME, url: SITE_URL,
+    logo: absoluteUrl('/brand/logo-mark-512.png'), parentOrganization: { '@type': 'Organization', name: 'UKQAAI Technologies', url: 'https://www.ukqaai.com' },
+  };
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd).replace(/</g, '\\u003c') }} />
       <section className="border-b border-line bg-gradient-to-b from-brand-50 to-ivory">
         <div className="container-page py-10 sm:py-14">
           <h1 className="max-w-3xl text-3xl font-bold leading-tight sm:text-4xl">{t('home.heroTitle')}</h1>

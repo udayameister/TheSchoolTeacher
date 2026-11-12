@@ -17,7 +17,7 @@ export default async function Footer() {
     <footer className="mt-16 border-t border-line bg-paper">
       <div className="container-page grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-3">
-          <Logo />
+          <Logo size={44} tagline={t('common.tagline')} />
           <p className="text-sm text-ink-soft">{t('footer.about')}</p>
         </div>
         {col(t('footer.candidates'), [{ href: '/jobs', label: t('nav.jobs') }, { href: '/jobs?type=government', label: t('nav.govtNotices') }, { href: '/register', label: t('nav.register') }])}

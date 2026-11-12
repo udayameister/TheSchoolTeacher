@@ -143,7 +143,7 @@ export function emailLayout(opts: { heading: string; paragraphs: string[]; butto
   const html = `<!doctype html><html><body style="margin:0;background:#FFFCF5;font-family:Arial,Helvetica,sans-serif;color:#1F2A2E">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #E7E1D4;border-radius:14px">
-<tr><td style="padding:20px 26px;border-bottom:3px solid #F0A22B;font-size:20px;font-weight:bold;color:#1A5550">TheSchool<span style="color:#8C4E10">Teacher</span></td></tr>
+<tr><td style="padding:18px 26px;border-bottom:3px solid #F0A22B"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="padding-right:10px"><img src="${esc(appUrl())}/brand/logo-email.png" width="40" height="40" alt="" style="display:block;border:0"></td><td style="font-size:20px;font-weight:bold;color:#16443F">TheSchool<span style="color:#B4670E">Teacher</span></td></tr></table></td></tr>
 <tr><td style="padding:24px 26px">
 <h1 style="margin:0 0 14px;font-size:20px;color:#12332F">${esc(opts.heading)}</h1>
 ${opts.paragraphs.map(p => `<p style="margin:0 0 12px;font-size:15px;line-height:1.55">${esc(p)}</p>`).join('')}
