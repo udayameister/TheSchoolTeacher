@@ -1,4 +1,4 @@
-# Architecture (Phases 1–3: Foundation, Candidate core, School core)
+# Architecture
 
 ## Stack
 Next.js 15 (App Router) · React 19 · TypeScript strict · Tailwind 3 · lucide-react · mysql2 · nodemailer.
@@ -200,6 +200,29 @@ slots, panel scoring, offer letters, talent search, reports. Subscription gating
   recruiter. They appear in search (type filter "Government notices" / "Other school sites"), alerts and SEO like
   other vacancies, and can be closed or reopened.
 - Commercial job portals are deliberately not supported as sources (their terms forbid automated reading).
+
+## Profiles, resume and career tools
+
+- **Teacher profile** (`types` CandidateProfile, `lib/server/profile.ts`): adds languages spoken, skills, awards, training,
+  availability, links (http/https only) and a "what you did there" text per job. Completeness counts skills/training and
+  availability. The photo is the latest image in the "photo" document category (`photoUrlOf`, signed short-lived link).
+- **School profile**: year established, students, teachers (ratio shown), staff benefits (master list "benefits"),
+  "why teachers should join us", achievements and social links; shown on the public school page and in its JSON-LD.
+- **Resume builder** (`/candidate/resume`): `lib/server/resume.ts` builds a `ResumeData` from the profile (no invented
+  content; empty sections are left out), in English or Hindi. Three templates (`components/candidate/ResumeSheet.tsx`);
+  Print / Save as PDF uses print CSS; the Word file (`/api/candidate/resume/docx`) is written by `lib/server/resumeDocx.ts`
+  with the in-house ZIP writer (`lib/server/zip.ts`, adapted from AcadeXMatch): one column, standard Word styles, no photo.
+- **Resume checker and CV import** (`/candidate/resume/check`): `lib/server/cvExtract.ts` (from AcadeXMatch; PDF via
+  `unpdf`, DOCX via the ZIP reader, TXT) reads an upload in memory and never stores it. `lib/cvParse.ts` turns the text
+  into suggestions using master data names, codes and the admin-editable `aliases` meta (plus class ranges such as
+  "Classes VI–X" → school levels). `lib/resumeCheck.ts` scores 12 weighted checks with tips (keys `checker.*`) and can
+  compare with a saved / applied vacancy. The candidate ticks what to add; `mergeImport` never duplicates entries and the
+  result goes through `cleanProfile`.
+- **Career tools** (public, `/career`): interview and demo-class preparation with a 5E lesson-plan maker
+  (`lib/content/interviewPrep.ts`), TET corner (TET list from master data, CTET pattern, original practice quiz in
+  `lib/content/tetPractice.ts`), salary insights (`lib/server/careerInsights.ts`: quartiles of stated pay in vacancies of
+  the last 12 months, shown only with ≥3 vacancies per post; pay levels from master data; a gross-pay estimator where the
+  reader enters DA/HRA rates). Content files carry English and Hindi; a test checks both are present.
 
 ## Next phases
 2 Candidate core · 3 School core · 4 Hiring tools · 5 Money · 6 Government notices & growth · 7 Hardening

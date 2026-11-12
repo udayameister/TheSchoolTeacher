@@ -59,6 +59,7 @@ export const KINDS: KindDef[] = [
       { key: 'scope', label: 'Scope', type: 'select', options: [{ value: 'national', label: 'National' }, { value: 'state', label: 'State' }, { value: 'international', label: 'International' }, { value: 'other', label: 'Other' }] },
       { key: 'fullName', label: 'Full official name', type: 'text' },
       { key: 'website', label: 'Official website', type: 'text' },
+      { key: 'aliases', label: 'Other spellings (CV import)', type: 'text', hint: 'Comma separated, e.g. Maths,Math,Ganit. Used to recognise this item in uploaded CVs.' },
     ],
   },
   {
@@ -88,12 +89,13 @@ export const KINDS: KindDef[] = [
       { key: 'category', label: 'Category', type: 'select', options: [{ value: 'teaching', label: 'Teaching' }, { value: 'leadership', label: 'Leadership' }, { value: 'non_teaching', label: 'Non-teaching' }] },
       yesNo('subjectWise', 'Advertised by subject (e.g. PGT Physics)'),
       { key: 'typicalLevels', label: 'Typical levels (codes, comma separated)', type: 'text', hint: 'e.g. PRIMARY or SECONDARY,SENIOR_SECONDARY' },
+      { key: 'aliases', label: 'Other spellings (CV import)', type: 'text', hint: 'Comma separated, e.g. Maths,Math,Ganit. Used to recognise this item in uploaded CVs.' },
     ],
   },
   {
     kind: 'subjects', label: 'Subjects', group: 'Posts & eligibility',
     description: 'Subjects a vacancy is for and a teacher can teach.',
-    meta: [{ key: 'area', label: 'Area', type: 'select', options: [{ value: 'language', label: 'Language' }, { value: 'science', label: 'Science & maths' }, { value: 'social', label: 'Social sciences' }, { value: 'commerce', label: 'Commerce' }, { value: 'arts', label: 'Arts, sports & co-curricular' }, { value: 'computer', label: 'Computer' }, { value: 'general', label: 'General / primary' }] }],
+    meta: [{ key: 'area', label: 'Area', type: 'select', options: [{ value: 'language', label: 'Language' }, { value: 'science', label: 'Science & maths' }, { value: 'social', label: 'Social sciences' }, { value: 'commerce', label: 'Commerce' }, { value: 'arts', label: 'Arts, sports & co-curricular' }, { value: 'computer', label: 'Computer' }, { value: 'general', label: 'General / primary' }] }, { key: 'aliases', label: 'Other spellings (CV import)', type: 'text', hint: 'Comma separated, e.g. Maths,Math,Ganit. Used to recognise this item in uploaded CVs.' }],
   },
   {
     kind: 'qualifications', label: 'Qualifications', group: 'Posts & eligibility',
@@ -101,6 +103,7 @@ export const KINDS: KindDef[] = [
     meta: [
       { key: 'type', label: 'Type', type: 'select', options: [{ value: 'teacher_education', label: 'Teacher education' }, { value: 'academic', label: 'Academic degree' }, { value: 'diploma', label: 'Diploma / certificate' }] },
       yesNo('recordPercentage', 'Ask for percentage'),
+      { key: 'aliases', label: 'Other spellings (CV import)', type: 'text', hint: 'Comma separated, e.g. Maths,Math,Ganit. Used to recognise this item in uploaded CVs.' },
     ],
   },
   {
@@ -113,6 +116,7 @@ export const KINDS: KindDef[] = [
       { key: 'validity', label: 'Certificate validity (as published)', type: 'text' },
       { key: 'conductedBy', label: 'Conducted by', type: 'text' },
       { key: 'website', label: 'Official website', type: 'text' },
+      { key: 'aliases', label: 'Other spellings (CV import)', type: 'text', hint: 'Comma separated, e.g. Maths,Math,Ganit. Used to recognise this item in uploaded CVs.' },
     ],
   },
   { kind: 'employmentTypes', label: 'Employment types', group: 'Posts & eligibility', description: 'Permanent, contract, guest / part-time, ad-hoc, tutor.', meta: [] },

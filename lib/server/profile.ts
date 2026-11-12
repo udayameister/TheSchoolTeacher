@@ -1,4 +1,5 @@
-import type { CandidateProfile, ExperienceEntry, MasterKind, QualificationEntry, StoredDocument, TetEntry, UserAccount } from '@/types';
+import type { AwardEntry, CandidateProfile, ExperienceEntry, MasterKind, ProfileLink, QualificationEntry, StoredDocument, TetEntry, TrainingEntry, UserAccount } from '@/types';
+import { AVAILABILITY } from '@/types';
 import type { Lookup } from '@/lib/jobs/filters';
 import { isIsoDate, isYearMonth } from '@/lib/jobs/dates';
 import { newId, nowIso } from './db';
@@ -14,6 +15,7 @@ export function emptyProfile(userId: string): CandidateProfile {
     qualifications: [], tets: [], subjectIds: [], levelIds: [], mediums: [], experience: [],
     preferredStateIds: [], preferredDistrictIds: [], willingToRelocate: false, expectedSalary: null,
     computerProficiency: 'none', rciNumber: null, certifications: null,
+    languageIds: [], skills: [], awards: [], trainings: [], availability: null, links: [],
     childSafety: { policeVerification: 'not_done', policeVerificationDate: null, selfDeclarationAt: null },
     discoverable: false, updatedAt: nowIso(),
   };
@@ -63,8 +65,32 @@ export function cleanProfile(input: Record<string, unknown>, prev: CandidateProf
     const to = current ? null : isYearMonth(x.to) ? x.to : null;
     if (!current && !to) return { error: `Experience at ${school}: enter the end month, or tick "I work here now".` };
     if (to && to < (x.from as string)) return { error: `Experience at ${school}: the end month is before the start month.` };
-    experience.push({ id: str(x.id, 40) || newId('x'), school, boardId: oneId(lookup, x.boardId, 'boards'), postId: oneId(lookup, x.postId, 'posts'), from: x.from as string, to, current, levelIds: ids(lookup, x.levelIds, 'schoolLevels'), subjectIds: ids(lookup, x.subjectIds, 'subjects') });
+    experience.push({ id: str(x.id, 40) || newId('x'), school, boardId: oneId(lookup, x.boardId, 'boards'), postId: oneId(lookup, x.postId, 'posts'), from: x.from as string, to, current, levelIds: ids(lookup, x.levelIds, 'schoolLevels'), subjectIds: ids(lookup, x.subjectIds, 'subjects'), highlights: str(x.highlights, 1500) });
   }
+
+  const awards: AwardEntry[] = arr(input.awards, 20).map(raw => {
+    const a = (raw || {}) as Record<string, unknown>;
+    return { id: str(a.id, 40) || newId('aw'), title: str(a.title, 160) || '', issuer: str(a.issuer, 160), year: int(a.year, 1960, 2100) };
+  }).filter(a => a.title);
+  const trainings: TrainingEntry[] = arr(input.trainings, 30).map(raw => {
+    const a = (raw || {}) as Record<string, unknown>;
+    return { id: str(a.id, 40) || newId('tr'), title: str(a.title, 160) || '', provider: str(a.provider, 160), year: int(a.year, 1960, 2100), hours: int(a.hours, 1, 5000) };
+  }).filter(a => a.title);
+  const links: ProfileLink[] = [];
+  for (const raw of arr(input.links, 8)) {
+    const a = (raw || {}) as Record<string, unknown>;
+    const u = str(a.url, 300);
+    if (!u) continue;
+    const clean = safeUrl(u);
+    if (!clean) return { error: `"${u.slice(0, 60)}" is not a web address. Links must start with https:// or http://.` };
+    links.push({ id: str(a.id, 40) || newId('ln'), label: str(a.label, 60) || new URL(clean).hostname, url: clean });
+  }
+  const skills: string[] = [];
+  for (const v of arr(input.skills, 40)) {
+    const sk = str(v, 60)?.replace(/\s+/g, ' ');
+    if (sk && !skills.some(x => x.toLowerCase() === sk.toLowerCase()) && skills.length < 30) skills.push(sk);
+  }
+  const availability = AVAILABILITY.find(v => v === input.availability) || null;
 
   const mediums = arr(input.mediums, 25).map(raw => {
     const m = (raw || {}) as Record<string, unknown>;
@@ -90,6 +116,8 @@ export function cleanProfile(input: Record<string, unknown>, prev: CandidateProf
     expectedSalary: int(input.expectedSalary, 0, 1_000_000),
     computerProficiency: (['none', 'basic', 'good', 'advanced'] as const).find(v => v === input.computerProficiency) || 'none',
     rciNumber: str(input.rciNumber, 40), certifications: str(input.certifications, 1000),
+    languageIds: ids(lookup, input.languageIds, 'mediums', 25),
+    skills, awards, trainings, availability, links,
     childSafety: {
       policeVerification: pv,
       policeVerificationDate: pv !== 'not_done' && isIsoDate(cs.policeVerificationDate) ? (cs.policeVerificationDate as string) : null,
@@ -100,6 +128,14 @@ export function cleanProfile(input: Record<string, unknown>, prev: CandidateProf
     updatedAt: nowIso(),
   };
   return { profile };
+}
+
+/** http(s) URL, normalised; anything else (javascript:, data: …) is refused. */
+export function safeUrl(v: string): string | null {
+  try {
+    const u = new URL(/^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `https://${v}`);
+    return (u.protocol === 'https:' || u.protocol === 'http:') && u.hostname.includes('.') ? u.toString() : null;
+  } catch { return null; }
 }
 
 export interface Completeness { percent: number; missing: string[] }
@@ -118,6 +154,8 @@ export function completeness(p: CandidateProfile, user: UserAccount, docs: Store
     ['medium', 5, p.mediums.length > 0],
     ['preferences', 5, p.preferredStateIds.length + p.preferredDistrictIds.length > 0 || p.willingToRelocate],
     ['salary', 5, !!p.expectedSalary],
+    ['skills', 5, (p.skills?.length || 0) > 0 || (p.trainings?.length || 0) > 0],
+    ['availability', 5, !!p.availability],
     ['photo', 5, has('photo')],
     ['certificates', 5, has('qualification')],
     ['childSafety', 5, !!p.childSafety.selfDeclarationAt],

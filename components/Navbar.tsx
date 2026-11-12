@@ -13,9 +13,10 @@ export default async function Navbar() {
   const links = [
     { href: '/jobs', label: t('nav.jobs') },
     { href: '/jobs?type=government', label: t('nav.govtNotices') },
+    { href: '/career', label: t('nav.career') },
     { href: '/for-schools', label: t('nav.forSchools') },
   ];
-  const auth = user ? (
+  const auth = () => user ? (
     <>
       <Link href={homeFor(user.role)} className="btn-primary">{t('nav.myConsole')}</Link>
       <Link href="/account" className="btn-ghost">{t('nav.account')}</Link>
@@ -28,22 +29,22 @@ export default async function Navbar() {
     </>
   );
   return (
-    <header className="border-b border-line bg-paper">
-      <div className="container-page flex min-h-[64px] items-center justify-between gap-3">
+    <header className="border-b border-line bg-paper print:hidden">
+      <div className="container-page flex min-h-[64px] items-center justify-between gap-2">
         <Link href="/" className="no-underline hover:no-underline" aria-label="TheSchoolTeacher home"><Logo /></Link>
-        <nav aria-label={t('nav.mainNav')} className="hidden items-center gap-1 lg:flex">
-          {links.map(l => <Link key={l.href} href={l.href} className="rounded-lg px-3 py-2 font-medium text-ink no-underline hover:bg-brand-50">{l.label}</Link>)}
+        <nav aria-label={t('nav.mainNav')} className="hidden items-center gap-0.5 xl:flex">
+          {links.map(l => <Link key={l.href} href={l.href} className="whitespace-nowrap rounded-lg px-2 py-2 font-medium text-ink no-underline hover:bg-brand-50">{l.label}</Link>)}
         </nav>
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-1.5 whitespace-nowrap xl:flex">
           <LanguageSwitcher />
-          {auth}
+          {auth()}
         </div>
-        <details className="relative lg:hidden">
+        <details className="relative xl:hidden">
           <summary className="btn-ghost list-none" aria-label={t('nav.menu')}><Menu size={20} aria-hidden="true" /></summary>
           <div className="absolute right-0 z-20 mt-2 flex w-64 flex-col gap-2 rounded-xl border border-line bg-paper p-3 shadow-card">
             {links.map(l => <Link key={l.href} href={l.href} className="rounded-lg px-3 py-2 font-medium text-ink no-underline hover:bg-brand-50">{l.label}</Link>)}
             <LanguageSwitcher />
-            {auth}
+            {auth()}
           </div>
         </details>
       </div>

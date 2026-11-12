@@ -28,7 +28,7 @@ for (const k of [...(useDb ? [] : ['DB_HOST']), 'SMTP_HOST', 'SMTP_USER', 'SMTP_
     console.log(`Testing against MySQL database "${process.env.DB_NAME}" (${tables.length} old tables dropped)\n`);
   }
   const { run } = await import('./harness');
-  for (const f of ['security', 'store', 'masterData', 'auth', 'otp', 'mailer', 'guards', 'i18n', 'search', 'candidate', 'school', 'hiring', 'import']) await import(`./${f}.test`);
+  for (const f of ['security', 'store', 'masterData', 'auth', 'otp', 'mailer', 'guards', 'i18n', 'search', 'candidate', 'school', 'hiring', 'import', 'careers']) await import(`./${f}.test`);
   const failed = await run();
   rmSync(dir, { recursive: true, force: true });
   process.exit(failed ? 1 : 0);

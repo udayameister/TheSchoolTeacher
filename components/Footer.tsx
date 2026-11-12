@@ -14,13 +14,13 @@ export default async function Footer() {
     </div>
   );
   return (
-    <footer className="mt-16 border-t border-line bg-paper">
+    <footer className="mt-16 border-t border-line bg-paper print:hidden">
       <div className="container-page grid gap-8 py-10 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-3">
           <Logo size={44} tagline={t('common.tagline')} />
           <p className="text-sm text-ink-soft">{t('footer.about')}</p>
         </div>
-        {col(t('footer.candidates'), [{ href: '/jobs', label: t('nav.jobs') }, { href: '/jobs?type=government', label: t('nav.govtNotices') }, { href: '/register', label: t('nav.register') }])}
+        {col(t('footer.candidates'), [{ href: '/jobs', label: t('nav.jobs') }, { href: '/jobs?type=government', label: t('nav.govtNotices') }, { href: '/career', label: t('nav.career') }, { href: '/career/tet', label: t('career.tetTitle') }, { href: '/career/salary', label: t('career.salaryTitle') }, { href: '/register', label: t('nav.register') }])}
         {col(t('footer.schools'), [{ href: '/for-schools', label: t('nav.forSchools') }, { href: '/schools', label: t('school.directoryTitle') }, { href: '/register?role=school', label: t('home.forSchoolsCta') }])}
         {col(t('footer.legal'), [{ href: '/terms', label: t('footer.terms') }, { href: '/privacy', label: t('footer.privacy') }, { href: '/refund-policy', label: t('footer.refund') }, { href: '/contact', label: t('footer.contact') }])}
       </div>

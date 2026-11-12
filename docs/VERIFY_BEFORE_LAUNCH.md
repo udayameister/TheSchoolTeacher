@@ -15,6 +15,9 @@ The admin dashboard shows how many items still carry the **VERIFY** flag.
 | UDISE+ directory | Not seeded. Import the school directory as CSV (Admin → UDISE+ directory) so registrations can be matched. | UDISE+ reports (udiseplus.gov.in) |
 | Districts, blocks | **Not seeded.** Import from the Local Government Directory as CSV (Admin → Master data → Districts → Import CSV; columns `code,name,nameHi,parentCode,lgdCode`, where `parentCode` is the state code such as `AP`). | lgdirectory.gov.in |
 | Suggested import sources | NVS, KVS, CBSE, AWES, TN TRB, BPSC and AP DSC addresses (Admin → Import sources → Suggested). Each is added switched off with a VERIFY badge: open it, replace a home page with the exact recruitment / notices page where one exists (KVS, CBSE), run it once and check the queue, then switch it on. | The official sites |
+| CTET pattern (TET corner) | 150 questions / 150 marks / 2½ hours / no negative marking / 60% qualifying, and the section split of Papers I and II, in `lib/content/tetPractice.ts` (`CTET_PATTERN`). The page tells readers to check the official bulletin. | Current CTET information bulletin (ctet.nic.in) |
+| Practice questions and interview tips | Original text in `lib/content/tetPractice.ts` and `lib/content/interviewPrep.ts` (English and Hindi). Have a teacher-educator read them once, especially the RTE Act, NEP 2020 and POCSO statements, and the Hindi. | A B.Ed / D.El.Ed faculty member |
+| CV import spellings | Master data "Other spellings (CV import)" (`aliases`) on qualifications, TETs, subjects, posts and boards is empty. Add common spellings (e.g. Maths, Math, Ganit; Sr. Secondary) so uploaded CVs are recognised better. | Your own CV samples |
 | Legal pages | Terms, Privacy, Refund policy are drafts and show a "Draft" notice. Name a Grievance Officer (DPDP Act). | A lawyer |
 | Contact address | `CONTACT_EMAIL` defaults to info@theschoolteacher.in. | Your mailbox |
 

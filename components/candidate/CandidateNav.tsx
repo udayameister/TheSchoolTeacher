@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useI18n } from '@/lib/i18n/client';
 
 const TABS = [
-  ['/candidate', 'dashboard'], ['/candidate/profile', 'profile'], ['/candidate/documents', 'documents'], ['/candidate/applications', 'applications'],
+  ['/candidate', 'dashboard'], ['/candidate/profile', 'profile'], ['/candidate/resume', 'resume'], ['/candidate/documents', 'documents'], ['/candidate/applications', 'applications'],
   ['/candidate/interviews', 'interviews'], ['/candidate/offers', 'offers'], ['/candidate/saved', 'saved'], ['/candidate/tracker', 'tracker'], ['/candidate/alerts', 'alerts'],
 ] as const;
 
@@ -12,7 +12,7 @@ export default function CandidateNav() {
   const { t } = useI18n();
   const path = usePathname();
   return (
-    <nav aria-label={t('candidate.navLabel')} className="border-b border-line bg-paper">
+    <nav aria-label={t('candidate.navLabel')} className="border-b border-line bg-paper print:hidden">
       <ul className="container-page flex gap-1 relative overflow-x-auto py-2">
         {TABS.map(([href, key]) => {
           const active = href === '/candidate' ? path === href : path.startsWith(href);

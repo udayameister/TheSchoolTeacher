@@ -23,6 +23,7 @@ const str = (v: unknown, max: number) => { const s = String(v ?? '').replace(/[\
 const arr = (v: unknown, max = 40): unknown[] => (Array.isArray(v) ? v.slice(0, max) : []);
 const ids = (lookup: Lookup, v: unknown, kind: MasterKind) => [...new Set(arr(v).map(String))].filter(id => lookup.get(id)?.kind === kind);
 const oneId = (lookup: Lookup, v: unknown, kind: MasterKind) => (typeof v === 'string' && lookup.get(v)?.kind === kind ? v : null);
+const intIn = (v: unknown, min: number, max: number) => { if (v === '' || v == null) return null; const n = Math.round(Number(v)); return Number.isFinite(n) && n >= min && n <= max ? n : null; };
 const url = (v: unknown) => { const s = str(v, 300); if (!s) return null; try { const u = new URL(/^https?:\/\//i.test(s) ? s : `https://${s}`); return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : null; } catch { return null; } };
 
 export function slugify(name: string, city: string): string {
@@ -102,6 +103,11 @@ export function cleanSchool(input: SchoolInput, lookup: Lookup, prev: School | n
     principalName: str(input.principalName, 120), website: url(input.website), about: str(input.about, 3000),
     levelIds: ids(lookup, input.levelIds, 'schoolLevels'), streamIds: ids(lookup, input.streamIds, 'streams'), mediumIds: ids(lookup, input.mediumIds, 'mediums'),
     facilityIds: ids(lookup, input.facilityIds, 'facilities'),
+    benefitIds: ids(lookup, input.benefitIds, 'benefits'),
+    establishedYear: intIn(input.establishedYear, 1800, new Date().getFullYear()),
+    studentCount: intIn(input.studentCount, 1, 100_000), teacherCount: intIn(input.teacherCount, 1, 5_000),
+    whyJoin: str(input.whyJoin, 2000), achievements: str(input.achievements, 2000),
+    socialLinks: arr(input.socialLinks, 6).map(raw => { const l = (raw || {}) as Record<string, unknown>; const u = url(l.url); return u ? { label: str(l.label, 40) || new URL(u).hostname.replace(/^www\./, ''), url: u } : null; }).filter((l): l is { label: string; url: string } => !!l),
     lat: lat === null ? null : Math.round(lat * 1e5) / 1e5, lng: lng === null ? null : Math.round(lng * 1e5) / 1e5,
   });
   if (officialEmail !== (prev?.officialEmail ?? null)) p.officialEmailVerified = false;

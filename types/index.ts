@@ -183,6 +183,16 @@ export interface School {
   about?: string | null;
   facilityIds: string[];
   photos: SchoolPhoto[];
+  establishedYear?: number | null;
+  studentCount?: number | null;
+  teacherCount?: number | null;
+  /** Staff benefits the school offers (master list "benefits"). */
+  benefitIds?: string[];
+  /** Why teachers should join: culture, training, growth. */
+  whyJoin?: string | null;
+  achievements?: string | null;
+  /** Social and video links (Facebook, YouTube, Instagram …). */
+  socialLinks?: { label: string; url: string }[];
   /** Offer-letter template with {merge fields}; empty = the default template. */
   offerTemplate?: string | null;
   /** Who signs offer letters. */
@@ -315,7 +325,12 @@ export type PoliceVerification = 'not_done' | 'applied' | 'done';
 
 export interface QualificationEntry { id: string; qualificationId: string; subjectId?: string | null; institution: string; year?: number | null; percentage?: number | null }
 export interface TetEntry { id: string; tetId: string; paper: string; year?: number | null; score?: number | null; validUntil?: string | null; lifetime?: boolean }
-export interface ExperienceEntry { id: string; school: string; boardId?: string | null; postId?: string | null; from: string; to?: string | null; current: boolean; levelIds: string[]; subjectIds: string[] }
+export interface ExperienceEntry { id: string; school: string; boardId?: string | null; postId?: string | null; from: string; to?: string | null; current: boolean; levelIds: string[]; subjectIds: string[]; /** What the candidate did there (one achievement per line). */ highlights?: string | null }
+export interface AwardEntry { id: string; title: string; issuer?: string | null; year?: number | null }
+export interface TrainingEntry { id: string; title: string; provider?: string | null; year?: number | null; hours?: number | null }
+export interface ProfileLink { id: string; label: string; url: string }
+export type Availability = 'immediate' | '15d' | '30d' | '60d' | '90d';
+export const AVAILABILITY: Availability[] = ['immediate', '15d', '30d', '60d', '90d'];
 
 export interface CandidateProfile {
   userId: string;
@@ -340,6 +355,16 @@ export interface CandidateProfile {
   computerProficiency: 'none' | 'basic' | 'good' | 'advanced';
   rciNumber?: string | null;
   certifications?: string | null;
+  /** Languages the candidate speaks (from the mediums list; teaching languages are in `mediums`). */
+  languageIds?: string[];
+  /** Teaching and co-curricular skills, as the candidate writes them (e.g. "smart-class tools", "kho-kho coaching"). */
+  skills?: string[];
+  awards?: AwardEntry[];
+  trainings?: TrainingEntry[];
+  /** How soon the candidate can join. */
+  availability?: Availability | null;
+  /** Demo-lesson video, LinkedIn, portfolio, blog … */
+  links?: ProfileLink[];
   childSafety: {
     policeVerification: PoliceVerification;
     policeVerificationDate?: string | null;

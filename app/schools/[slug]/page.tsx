@@ -42,7 +42,8 @@ export default async function SchoolPage({ params }: { params: Params }) {
     '@context': 'https://schema.org', '@type': 'School', name: s.name, url: absoluteUrl(`/schools/${s.slug}`),
     address: { '@type': 'PostalAddress', streetAddress: s.address || undefined, addressLocality: s.city, addressRegion: nameOf(lookup, s.stateId), postalCode: s.pincode || undefined, addressCountry: 'IN' },
     ...(s.lat != null && s.lng != null ? { geo: { '@type': 'GeoCoordinates', latitude: s.lat, longitude: s.lng } } : {}),
-    ...(s.website ? { sameAs: [s.website] } : {}), ...(s.about ? { description: s.about.slice(0, 500) } : {}),
+    ...(s.website || (s.socialLinks || []).length ? { sameAs: [s.website, ...(s.socialLinks || []).map(l => l.url)].filter(Boolean) } : {}),
+    ...(s.establishedYear ? { foundingDate: String(s.establishedYear) } : {}), ...(s.about ? { description: s.about.slice(0, 500) } : {}),
     identifier: { '@type': 'PropertyValue', propertyID: 'UDISE+', value: s.udiseCode },
   };
   return (
@@ -71,6 +72,14 @@ export default async function SchoolPage({ params }: { params: Params }) {
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           {s.about && <section className="card"><h2 className="text-lg font-bold">{t('school.about')}</h2><p className="mt-2 whitespace-pre-line leading-relaxed">{s.about}</p></section>}
+          {(s.whyJoin || (s.benefitIds || []).length > 0) && (
+            <section className="card space-y-2">
+              <h2 className="text-lg font-bold">{t('school.forTeachers')}</h2>
+              {s.whyJoin && <p className="whitespace-pre-line leading-relaxed">{s.whyJoin}</p>}
+              {(s.benefitIds || []).length > 0 && <ul className="flex flex-wrap gap-2" aria-label={t('school.staffBenefits')}>{(s.benefitIds || []).map(id => <li key={id} className="badge border-brand-300 bg-brand-50 py-1 text-sm text-brand-800">{nameOf(lookup, id, locale)}</li>)}</ul>}
+            </section>
+          )}
+          {s.achievements && <section className="card"><h2 className="text-lg font-bold">{t('school.achievements')}</h2><p className="mt-2 whitespace-pre-line leading-relaxed">{s.achievements}</p></section>}
           <section aria-labelledby="open-h" className="space-y-3">
             <h2 id="open-h" className="text-lg font-bold">{t('school.openVacancies')} ({jobs.length})</h2>
             {jobs.length ? <ul className="space-y-3">{jobs.map(j => <li key={j.id}><JobCard job={j} ctx={ctx} /></li>)}</ul> : <p className="card text-ink-soft">{t('school.noOpenVacancies')}</p>}
@@ -85,6 +94,11 @@ export default async function SchoolPage({ params }: { params: Params }) {
             {fact(t('school.streams'), namesOf(lookup, s.streamIds, locale))}
             {fact(t('school.mediums'), namesOf(lookup, s.mediumIds, locale))}
             {fact(t('school.facilities'), namesOf(lookup, s.facilityIds, locale))}
+            {fact(t('school.establishedYear'), s.establishedYear ? String(s.establishedYear) : '')}
+            {fact(t('school.studentCount'), s.studentCount ? s.studentCount.toLocaleString('en-IN') : '')}
+            {fact(t('school.teacherCount'), s.teacherCount ? s.teacherCount.toLocaleString('en-IN') : '')}
+            {fact(t('school.studentTeacherRatio'), s.studentCount && s.teacherCount ? `${Math.round(s.studentCount / s.teacherCount)} : 1` : '')}
+            {fact(t('school.socialLinks'), (s.socialLinks || []).length ? <ul>{(s.socialLinks || []).map(l => <li key={l.url}><a href={l.url} target="_blank" rel="noopener noreferrer nofollow">{l.label}</a></li>)}</ul> : '')}
             {fact('UDISE+', s.udiseCode)}
           </dl>
         </aside>

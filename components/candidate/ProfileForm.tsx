@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import type { CandidateProfile, ExperienceEntry, MasterItem, QualificationEntry, TetEntry } from '@/types';
+import type { AwardEntry, CandidateProfile, ExperienceEntry, MasterItem, ProfileLink, QualificationEntry, TetEntry, TrainingEntry } from '@/types';
+import { AVAILABILITY } from '@/types';
 import { useI18n } from '@/lib/i18n/client';
 import { itemName } from '@/lib/i18n/translate';
 import { api } from '@/lib/clientApi';
@@ -26,12 +27,13 @@ function useDistricts(stateId: string | null | undefined): Lite[] {
   return list;
 }
 
-export default function ProfileForm({ initial, name: initialName, lists, completeness: initialC, matchingConsent }: {
-  initial: CandidateProfile; name: string; lists: ProfileLists; completeness: { percent: number; missing: string[] }; matchingConsent: boolean;
+export default function ProfileForm({ initial, name: initialName, lists, completeness: initialC, matchingConsent, photoUrl }: {
+  initial: CandidateProfile; name: string; lists: ProfileLists; completeness: { percent: number; missing: string[] }; matchingConsent: boolean; photoUrl?: string | null;
 }) {
   const { t, locale } = useI18n();
   const nm = (i: Lite) => itemName(i, locale);
-  const [p, setP] = useState<CandidateProfile>(initial);
+  const [p, setP] = useState<CandidateProfile>({ ...initial, languageIds: initial.languageIds || [], skills: initial.skills || [], awards: initial.awards || [], trainings: initial.trainings || [], links: initial.links || [] });
+  const [skillDraft, setSkillDraft] = useState('');
   const [name, setName] = useState(initialName);
   const [declare, setDeclare] = useState(!!initial.childSafety.selfDeclarationAt);
   const [c, setC] = useState(initialC);
@@ -44,11 +46,17 @@ export default function ProfileForm({ initial, name: initialName, lists, complet
   useEffect(() => { setKnownDistricts(k => ({ ...k, ...Object.fromEntries([...districts, ...prefDistricts].map(d => [d.id, d])) })); }, [districts, prefDistricts]);
 
   const set = <K extends keyof CandidateProfile>(k: K, v: CandidateProfile[K]) => setP(prev => ({ ...prev, [k]: v }));
-  const toggle = (k: 'subjectIds' | 'levelIds' | 'preferredStateIds' | 'preferredDistrictIds', id: string) =>
-    setP(prev => ({ ...prev, [k]: prev[k].includes(id) ? prev[k].filter(x => x !== id) : [...prev[k], id] }));
-  const updateRow = <T extends { id: string }>(k: 'qualifications' | 'tets' | 'experience', id: string, patch: Partial<T>) =>
-    setP(prev => ({ ...prev, [k]: (prev[k] as unknown as T[]).map(r => (r.id === id ? { ...r, ...patch } : r)) }));
-  const removeRow = (k: 'qualifications' | 'tets' | 'experience', id: string) => setP(prev => ({ ...prev, [k]: (prev[k] as { id: string }[]).filter(r => r.id !== id) }));
+  const toggle = (k: 'subjectIds' | 'levelIds' | 'preferredStateIds' | 'preferredDistrictIds' | 'languageIds', id: string) =>
+    setP(prev => { const cur = prev[k] || []; return { ...prev, [k]: cur.includes(id) ? cur.filter(x => x !== id) : [...cur, id] }; });
+  type RowKey = 'qualifications' | 'tets' | 'experience' | 'awards' | 'trainings' | 'links';
+  const updateRow = <T extends { id: string }>(k: RowKey, id: string, patch: Partial<T>) =>
+    setP(prev => ({ ...prev, [k]: ((prev[k] || []) as unknown as T[]).map(r => (r.id === id ? { ...r, ...patch } : r)) }));
+  const removeRow = (k: RowKey, id: string) => setP(prev => ({ ...prev, [k]: ((prev[k] || []) as { id: string }[]).filter(r => r.id !== id) }));
+  const addSkill = () => {
+    const v = skillDraft.trim().replace(/\s+/g, ' ').slice(0, 60);
+    if (v && !(p.skills || []).some(x => x.toLowerCase() === v.toLowerCase()) && (p.skills || []).length < 30) set('skills', [...(p.skills || []), v]);
+    setSkillDraft('');
+  };
 
   async function save(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setMsg(null);
@@ -92,7 +100,18 @@ export default function ProfileForm({ initial, name: initialName, lists, complet
           {field('pf-name', t('common.name'), <input id="pf-name" className="input" required minLength={2} maxLength={120} autoComplete="name" value={name} onChange={e => setName(e.target.value)} />)}
           {field('pf-phone', t('profile.phone'), <input id="pf-phone" className="input" type="tel" inputMode="tel" autoComplete="tel" maxLength={20} placeholder="98765 43210" value={p.phone || ''} onChange={e => set('phone', e.target.value)} />, t('profile.phoneHint'))}
           <div className="sm:col-span-2">{field('pf-headline', t('profile.headline'), <input id="pf-headline" className="input" maxLength={140} placeholder={t('profile.headlinePlaceholder')} value={p.headline || ''} onChange={e => set('headline', e.target.value)} />)}</div>
-          <div className="sm:col-span-2">{field('pf-about', t('profile.about'), <textarea id="pf-about" className="input min-h-[100px]" maxLength={2000} value={p.about || ''} onChange={e => set('about', e.target.value)} />)}</div>
+          <div className="sm:col-span-2">{field('pf-about', t('profile.about'), <textarea id="pf-about" className="input min-h-[100px]" maxLength={2000} value={p.about || ''} onChange={e => set('about', e.target.value)} />, t('profile.aboutHint'))}</div>
+          {field('pf-avail', t('profile.availability'), <select id="pf-avail" className="input" value={p.availability || ''} onChange={e => set('availability', (e.target.value || null) as CandidateProfile['availability'])}>
+            <option value="">—</option>{AVAILABILITY.map(v => <option key={v} value={v}>{t(`profile.avail_${v}`)}</option>)}</select>)}
+          <div className="flex items-center gap-3">
+            {photoUrl
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={photoUrl} alt={t('profile.photoAlt')} className="h-16 w-16 rounded-full border border-line object-cover" />
+              : <span aria-hidden="true" className="flex h-16 w-16 items-center justify-center rounded-full border border-dashed border-line text-xs text-ink-muted">{t('profile.noPhoto')}</span>}
+            <p className="text-sm">{photoUrl ? t('profile.photoChange') : t('profile.photoAdd')} <Link href="/candidate/documents">{t('candidate.nav_documents')}</Link></p>
+          </div>
+          <details className="sm:col-span-2"><summary className="cursor-pointer text-sm font-semibold text-brand-700">{t('profile.languagesKnown')} ({(p.languageIds || []).length})</summary>
+            {checks(lists.mediums, p.languageIds || [], id => toggle('languageIds', id))}</details>
         </div>
       ))}
 
@@ -189,13 +208,14 @@ export default function ProfileForm({ initial, name: initialName, lists, complet
                 {!x.current && field(`x-${x.id}-t`, t('profile.to'), <input id={`x-${x.id}-t`} className="input" type="month" value={x.to || ''} onChange={e => updateRow<ExperienceEntry>('experience', x.id, { to: e.target.value || null })} />)}
                 <label className="flex min-h-[40px] items-center gap-2 text-sm"><input type="checkbox" className="h-5 w-5" checked={x.current} onChange={e => updateRow<ExperienceEntry>('experience', x.id, { current: e.target.checked, to: null })} />{t('profile.currentJob')}</label>
               </div>
+              <div className="sm:col-span-2">{field(`x-${x.id}-h`, t('profile.highlights'), <textarea id={`x-${x.id}-h`} className="input min-h-[80px]" maxLength={1500} placeholder={t('profile.highlightsPlaceholder')} value={x.highlights || ''} onChange={e => updateRow<ExperienceEntry>('experience', x.id, { highlights: e.target.value })} />, t('profile.highlightsHint'))}</div>
               <fieldset className="sm:col-span-2"><legend className="label">{t('profile.classesTaught')}</legend>{checks(lists.levels, x.levelIds, id => updateRow<ExperienceEntry>('experience', x.id, { levelIds: x.levelIds.includes(id) ? x.levelIds.filter(v => v !== id) : [...x.levelIds, id] }))}</fieldset>
               <details className="sm:col-span-2"><summary className="cursor-pointer text-sm font-semibold text-brand-700">{t('profile.subjectsTaught')} ({x.subjectIds.length})</summary>
                 {checks(lists.subjects, x.subjectIds, id => updateRow<ExperienceEntry>('experience', x.id, { subjectIds: x.subjectIds.includes(id) ? x.subjectIds.filter(v => v !== id) : [...x.subjectIds, id] }))}</details>
               <button type="button" className="inline-flex items-center gap-1 text-sm font-semibold text-danger-700 sm:col-span-2" onClick={() => removeRow('experience', x.id)}><Trash2 size={16} aria-hidden="true" />{t('profile.remove')}</button>
             </fieldset>
           ))}
-          <button type="button" className="btn-ghost" onClick={() => set('experience', [...p.experience, { id: tmpId('x'), school: '', boardId: null, postId: null, from: '', to: null, current: false, levelIds: [], subjectIds: [] }])}><Plus size={18} aria-hidden="true" />{t('profile.addExperience')}</button>
+          <button type="button" className="btn-ghost" onClick={() => set('experience', [...p.experience, { id: tmpId('x'), school: '', boardId: null, postId: null, from: '', to: null, current: false, levelIds: [], subjectIds: [], highlights: '' }])}><Plus size={18} aria-hidden="true" />{t('profile.addExperience')}</button>
         </>
       ), t('profile.experienceHint'))}
 
@@ -231,6 +251,67 @@ export default function ProfileForm({ initial, name: initialName, lists, complet
           <div className="sm:col-span-2">{field('pf-cert', t('profile.certifications'), <textarea id="pf-cert" className="input min-h-[80px]" maxLength={1000} placeholder={t('profile.certificationsPlaceholder')} value={p.certifications || ''} onChange={e => set('certifications', e.target.value)} />)}</div>
         </div>
       ))}
+
+      {section('s-growth', t('profile.growth'), (
+        <>
+          <div>
+            <p className="label">{t('profile.trainings')}</p>
+            {(p.trainings || []).map((x: TrainingEntry) => (
+              <fieldset key={x.id} className="mb-2 grid gap-3 rounded-lg border border-line p-3 sm:grid-cols-4">
+                <legend className="sr-only">{t('profile.trainings')}</legend>
+                <div className="sm:col-span-2">{field(`tr-${x.id}-t`, t('profile.trainingTitle'), <input id={`tr-${x.id}-t`} className="input" required maxLength={160} placeholder={t('profile.trainingPlaceholder')} value={x.title} onChange={e => updateRow<TrainingEntry>('trainings', x.id, { title: e.target.value })} />)}</div>
+                {field(`tr-${x.id}-p`, t('profile.provider'), <input id={`tr-${x.id}-p`} className="input" maxLength={160} value={x.provider || ''} onChange={e => updateRow<TrainingEntry>('trainings', x.id, { provider: e.target.value })} />)}
+                <div className="grid grid-cols-2 gap-2">
+                  {field(`tr-${x.id}-y`, t('profile.year'), <input id={`tr-${x.id}-y`} className="input" type="number" min={1960} max={year + 1} value={x.year ?? ''} onChange={e => updateRow<TrainingEntry>('trainings', x.id, { year: e.target.value ? Number(e.target.value) : null })} />)}
+                  {field(`tr-${x.id}-h`, t('profile.hours'), <input id={`tr-${x.id}-h`} className="input" type="number" min={1} max={5000} value={x.hours ?? ''} onChange={e => updateRow<TrainingEntry>('trainings', x.id, { hours: e.target.value ? Number(e.target.value) : null })} />)}
+                </div>
+                <button type="button" className="inline-flex items-center gap-1 text-sm font-semibold text-danger-700 sm:col-span-4" onClick={() => removeRow('trainings', x.id)}><Trash2 size={16} aria-hidden="true" />{t('profile.remove')}</button>
+              </fieldset>
+            ))}
+            <button type="button" className="btn-ghost" onClick={() => set('trainings', [...(p.trainings || []), { id: tmpId('tr'), title: '', provider: '', year: null, hours: null }])}><Plus size={18} aria-hidden="true" />{t('profile.addTraining')}</button>
+          </div>
+          <div>
+            <p className="label">{t('profile.awards')}</p>
+            {(p.awards || []).map((x: AwardEntry) => (
+              <fieldset key={x.id} className="mb-2 grid gap-3 rounded-lg border border-line p-3 sm:grid-cols-4">
+                <legend className="sr-only">{t('profile.awards')}</legend>
+                <div className="sm:col-span-2">{field(`aw-${x.id}-t`, t('profile.awardTitle'), <input id={`aw-${x.id}-t`} className="input" required maxLength={160} placeholder={t('profile.awardPlaceholder')} value={x.title} onChange={e => updateRow<AwardEntry>('awards', x.id, { title: e.target.value })} />)}</div>
+                {field(`aw-${x.id}-i`, t('profile.issuer'), <input id={`aw-${x.id}-i`} className="input" maxLength={160} value={x.issuer || ''} onChange={e => updateRow<AwardEntry>('awards', x.id, { issuer: e.target.value })} />)}
+                {field(`aw-${x.id}-y`, t('profile.year'), <input id={`aw-${x.id}-y`} className="input" type="number" min={1960} max={year + 1} value={x.year ?? ''} onChange={e => updateRow<AwardEntry>('awards', x.id, { year: e.target.value ? Number(e.target.value) : null })} />)}
+                <button type="button" className="inline-flex items-center gap-1 text-sm font-semibold text-danger-700 sm:col-span-4" onClick={() => removeRow('awards', x.id)}><Trash2 size={16} aria-hidden="true" />{t('profile.remove')}</button>
+              </fieldset>
+            ))}
+            <button type="button" className="btn-ghost" onClick={() => set('awards', [...(p.awards || []), { id: tmpId('aw'), title: '', issuer: '', year: null }])}><Plus size={18} aria-hidden="true" />{t('profile.addAward')}</button>
+          </div>
+          <div>
+            <label htmlFor="pf-skill" className="label">{t('profile.skills')}</label>
+            <ul className="mb-2 flex flex-wrap gap-2">
+              {(p.skills || []).map(v => (
+                <li key={v} className="badge border-brand-300 bg-brand-50 py-1 text-sm text-brand-800">{v}
+                  <button type="button" className="ml-1 font-bold" aria-label={`${t('profile.remove')} ${v}`} onClick={() => set('skills', (p.skills || []).filter(x => x !== v))}>×</button></li>
+              ))}
+            </ul>
+            <div className="flex gap-2">
+              <input id="pf-skill" className="input" maxLength={60} placeholder={t('profile.skillsPlaceholder')} value={skillDraft} onChange={e => setSkillDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSkill(); } }} />
+              <button type="button" className="btn-ghost shrink-0" onClick={addSkill}>{t('profile.addSkill')}</button>
+            </div>
+            <p className="hint">{t('profile.skillsHint')}</p>
+          </div>
+        </>
+      ), t('profile.growthHint'))}
+
+      {section('s-links', t('profile.links'), (
+        <>
+          {(p.links || []).map((x: ProfileLink) => (
+            <div key={x.id} className="grid gap-3 sm:grid-cols-[1fr_2fr_auto] sm:items-end">
+              {field(`ln-${x.id}-l`, t('profile.linkLabel'), <input id={`ln-${x.id}-l`} className="input" maxLength={60} placeholder={t('profile.linkLabelPlaceholder')} value={x.label} onChange={e => updateRow<ProfileLink>('links', x.id, { label: e.target.value })} />)}
+              {field(`ln-${x.id}-u`, t('profile.linkUrl'), <input id={`ln-${x.id}-u`} className="input" inputMode="url" maxLength={300} placeholder="https://" value={x.url} onChange={e => updateRow<ProfileLink>('links', x.id, { url: e.target.value })} />)}
+              <button type="button" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-danger-700" onClick={() => removeRow('links', x.id)}><Trash2 size={16} aria-hidden="true" />{t('profile.remove')}</button>
+            </div>
+          ))}
+          {(p.links || []).length < 8 && <button type="button" className="btn-ghost" onClick={() => set('links', [...(p.links || []), { id: tmpId('ln'), label: '', url: '' }])}><Plus size={18} aria-hidden="true" />{t('profile.addLink')}</button>}
+        </>
+      ), t('profile.linksHint'))}
 
       {section('s-safety', t('profile.childSafety'), (
         <>

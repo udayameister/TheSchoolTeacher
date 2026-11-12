@@ -15,7 +15,7 @@ export default function SchoolNav({ schools, currentId, canAddBranch, tabs }: { 
   const path = usePathname();
   const router = useRouter();
   return (
-    <nav aria-label={t('school.navLabel')} className="border-b border-line bg-paper">
+    <nav aria-label={t('school.navLabel')} className="border-b border-line bg-paper print:hidden">
       <div className="container-page flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
         <ul className="flex gap-1 relative overflow-x-auto">
           {TABS.filter(([, key]) => tabs.includes(key)).map(([href, key]) => {

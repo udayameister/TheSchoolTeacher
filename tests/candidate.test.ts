@@ -34,7 +34,7 @@ describe('candidate profile', () => {
   it('computes completeness', () => {
     const empty = completeness(emptyProfile('x'), me, []);
     ok(empty.percent < 10 && empty.missing.includes('phone'));
-    const full = completeness(profile('x', { preferredStateIds: ['states:AP'], childSafety: { policeVerification: 'done', selfDeclarationAt: 'now' } }), { ...me, emailVerified: true }, [{ category: 'photo' }, { category: 'qualification' }] as never);
+    const full = completeness(profile('x', { preferredStateIds: ['states:AP'], childSafety: { policeVerification: 'done', selfDeclarationAt: 'now' }, skills: ['Kho-kho coaching'], availability: '30d' }), { ...me, emailVerified: true }, [{ category: 'photo' }, { category: 'qualification' }] as never);
     eq(full.percent, 100);
   });
 });

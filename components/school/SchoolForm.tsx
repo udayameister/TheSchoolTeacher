@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/client';
 import { itemName } from '@/lib/i18n/translate';
 import { api } from '@/lib/clientApi';
 
-export interface SchoolLists { states: MasterItem[]; boards: MasterItem[]; managementTypes: MasterItem[]; levels: MasterItem[]; streams: MasterItem[]; mediums: MasterItem[]; facilities: MasterItem[] }
+export interface SchoolLists { states: MasterItem[]; boards: MasterItem[]; managementTypes: MasterItem[]; levels: MasterItem[]; streams: MasterItem[]; mediums: MasterItem[]; facilities: MasterItem[]; benefits: MasterItem[] }
 type Lite = { id: string; name: string; nameHi?: string };
 
 const blank = {
@@ -14,6 +14,8 @@ const blank = {
   levelIds: [] as string[], streamIds: [] as string[], mediumIds: [] as string[], facilityIds: [] as string[],
   stateId: '', districtId: '', city: '', address: '', pincode: '', lat: '' as string | number, lng: '' as string | number,
   officialEmail: '', phone: '', principalName: '', website: '', about: '',
+  establishedYear: '' as string | number, studentCount: '' as string | number, teacherCount: '' as string | number,
+  benefitIds: [] as string[], whyJoin: '', achievements: '', socialLinks: [] as { label: string; url: string }[],
 };
 
 /**
@@ -27,6 +29,7 @@ export default function SchoolForm({ mode, school, lists, identityLocked, canCre
   const [f, setF] = useState(() => school ? {
     ...blank, ...Object.fromEntries(Object.entries(school).filter(([k]) => k in blank).map(([k, v]) => [k, v ?? ''])),
     affiliations: school.affiliations.length ? school.affiliations.map(a => ({ boardId: a.boardId, number: a.number ?? '' })) : blank.affiliations,
+    benefitIds: school.benefitIds || [], socialLinks: school.socialLinks || [],
   } as typeof blank : blank);
   const [isGroup, setIsGroup] = useState(false);
   const [groupName, setGroupName] = useState('');
@@ -36,7 +39,7 @@ export default function SchoolForm({ mode, school, lists, identityLocked, canCre
   const [busy, setBusy] = useState(false);
 
   const set = <K extends keyof typeof blank>(k: K, v: (typeof blank)[K]) => setF(prev => ({ ...prev, [k]: v }));
-  const toggle = (k: 'levelIds' | 'streamIds' | 'mediumIds' | 'facilityIds', id: string) => setF(prev => ({ ...prev, [k]: prev[k].includes(id) ? prev[k].filter(x => x !== id) : [...prev[k], id] }));
+  const toggle = (k: 'levelIds' | 'streamIds' | 'mediumIds' | 'facilityIds' | 'benefitIds', id: string) => setF(prev => ({ ...prev, [k]: prev[k].includes(id) ? prev[k].filter(x => x !== id) : [...prev[k], id] }));
 
   useEffect(() => {
     if (!f.stateId) { setDistricts([]); return; }
@@ -64,7 +67,7 @@ export default function SchoolForm({ mode, school, lists, identityLocked, canCre
   }
 
   const field = (id: string, label: string, input: React.ReactNode, hint?: string) => <div><label htmlFor={id} className="label">{label}</label>{input}{hint && <p className="hint">{hint}</p>}</div>;
-  const checks = (items: Lite[], k: 'levelIds' | 'streamIds' | 'mediumIds' | 'facilityIds') => (
+  const checks = (items: Lite[], k: 'levelIds' | 'streamIds' | 'mediumIds' | 'facilityIds' | 'benefitIds') => (
     <ul className="grid gap-x-4 sm:grid-cols-2 lg:grid-cols-3">{items.map(i => <li key={i.id}><label className="flex min-h-[40px] items-center gap-2 text-sm"><input type="checkbox" className="h-5 w-5 shrink-0" checked={f[k].includes(i.id)} onChange={() => toggle(k, i.id)} />{nm(i)}</label></li>)}</ul>
   );
   const section = (id: string, title: string, children: React.ReactNode, hint?: string) => (
@@ -160,8 +163,32 @@ export default function SchoolForm({ mode, school, lists, identityLocked, canCre
         <>
           {field('sc-about', t('school.about'), <textarea id="sc-about" className="input min-h-[140px]" maxLength={3000} value={f.about} onChange={e => set('about', e.target.value)} />, t('school.aboutHint'))}
           <fieldset><legend className="label">{t('school.facilities')}</legend>{checks(lists.facilities, 'facilityIds')}</fieldset>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {field('sc-est', t('school.establishedYear'), <input id="sc-est" className="input" type="number" inputMode="numeric" min={1800} max={new Date().getFullYear()} value={f.establishedYear} onChange={e => set('establishedYear', e.target.value)} />)}
+            {field('sc-students', t('school.studentCount'), <input id="sc-students" className="input" type="number" inputMode="numeric" min={1} max={100000} value={f.studentCount} onChange={e => set('studentCount', e.target.value)} />)}
+            {field('sc-teachers', t('school.teacherCount'), <input id="sc-teachers" className="input" type="number" inputMode="numeric" min={1} max={5000} value={f.teacherCount} onChange={e => set('teacherCount', e.target.value)} />)}
+          </div>
+          {field('sc-ach', t('school.achievements'), <textarea id="sc-ach" className="input min-h-[90px]" maxLength={2000} value={f.achievements} onChange={e => set('achievements', e.target.value)} />, t('school.achievementsHint'))}
         </>
       ))}
+
+      {section('s-staff', t('school.forTeachers'), (
+        <>
+          {field('sc-why', t('school.whyJoin'), <textarea id="sc-why" className="input min-h-[120px]" maxLength={2000} placeholder={t('school.whyJoinPlaceholder')} value={f.whyJoin} onChange={e => set('whyJoin', e.target.value)} />, t('school.whyJoinHint'))}
+          {lists.benefits.length > 0 && <fieldset><legend className="label">{t('school.staffBenefits')}</legend>{checks(lists.benefits, 'benefitIds')}</fieldset>}
+          <div>
+            <p className="label">{t('school.socialLinks')}</p>
+            {f.socialLinks.map((l, i) => (
+              <div key={i} className="mb-2 grid gap-2 sm:grid-cols-[1fr_2fr_auto] sm:items-end">
+                {field(`sl-${i}-l`, t('profile.linkLabel'), <input id={`sl-${i}-l`} className="input" maxLength={40} placeholder="YouTube" value={l.label} onChange={e => set('socialLinks', f.socialLinks.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)))} />)}
+                {field(`sl-${i}-u`, t('profile.linkUrl'), <input id={`sl-${i}-u`} className="input" inputMode="url" maxLength={300} placeholder="https://" value={l.url} onChange={e => set('socialLinks', f.socialLinks.map((x, k) => (k === i ? { ...x, url: e.target.value } : x)))} />)}
+                <button type="button" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-danger-700" onClick={() => set('socialLinks', f.socialLinks.filter((_, k) => k !== i))}><Trash2 size={16} aria-hidden="true" />{t('profile.remove')}</button>
+              </div>
+            ))}
+            {f.socialLinks.length < 6 && <button type="button" className="btn-ghost" onClick={() => set('socialLinks', [...f.socialLinks, { label: '', url: '' }])}><Plus size={18} aria-hidden="true" />{t('profile.addLink')}</button>}
+          </div>
+        </>
+      ), t('school.forTeachersHint'))}
 
       {msg && <p role="status" className={msg.ok ? 'alert-ok' : 'alert-error'}>{msg.text}</p>}
       <button className="btn-primary" disabled={busy}>{busy ? t('common.loading') : mode === 'register' ? t('school.submitForVerification') : t('common.save')}</button>

@@ -10,7 +10,7 @@ export function lite(db: Store, kind: MasterKind, keepMeta: string[] = []): Mast
 export function schoolFormLists(db: Store) {
   return {
     states: lite(db, 'states'), boards: lite(db, 'boards'), managementTypes: lite(db, 'managementTypes'), levels: lite(db, 'schoolLevels'),
-    streams: lite(db, 'streams'), mediums: lite(db, 'mediums'), facilities: lite(db, 'facilities'),
+    streams: lite(db, 'streams'), mediums: lite(db, 'mediums'), facilities: lite(db, 'facilities'), benefits: lite(db, 'benefits'),
   };
 }
 
