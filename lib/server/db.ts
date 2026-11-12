@@ -33,6 +33,8 @@ export interface Collections {
   /** Per alert: vacancies already sent and when it last ran (server-only bookkeeping). */
   /** View counts per vacancy (kept apart from the vacancies so a page view rewrites only this small record). */
   jobViews: Record<string, number>;
+  /** Site visits: "total" and one entry per India-time day (YYYY-MM-DD). No personal data. */
+  siteVisits: Record<string, number>;
   alertState: Record<string, { seen: string[]; lastRunDay?: string; lastSentMs?: number }>;
   staffInvites: StaffInvite[];
   slots: InterviewSlot[];
@@ -58,7 +60,7 @@ function queue<T>(fn: () => Promise<T>): Promise<T> {
 
 function ensureShape(db: Db): void {
   for (const k of ['users', 'outbox', 'audit', 'suppressed', 'schools', 'groups', 'appNotes', 'jobs', 'documents', 'applications', 'savedJobs', 'tracked', 'alerts', 'staffInvites', 'slots', 'interviews', 'panelScores', 'offers', 'talentInvites', 'importSources', 'importItems'] as const) if (!Array.isArray(db[k])) db[k] = [];
-  for (const k of ['sessions', 'tokens', 'otp', 'master', 'profiles', 'alertState', 'jobViews'] as const) if (!db[k] || typeof db[k] !== 'object' || Array.isArray(db[k])) db[k] = {};
+  for (const k of ['sessions', 'tokens', 'otp', 'master', 'profiles', 'alertState', 'jobViews', 'siteVisits'] as const) if (!db[k] || typeof db[k] !== 'object' || Array.isArray(db[k])) db[k] = {};
   if (typeof db.masterSeedVersion !== 'number') db.masterSeedVersion = 0;
   seedMasterData(db as unknown as Collections);
 }

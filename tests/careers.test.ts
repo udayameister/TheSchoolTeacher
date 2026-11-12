@@ -224,3 +224,13 @@ describe('career content', () => {
     eq(new Set(PRACTICE.map(q => q.id)).size, PRACTICE.length);
   });
 });
+
+describe('visit counter', () => {
+  it('counts a total and per India-time day, and ignores crawlers', async () => {
+    const { recordVisit, visitStats, isBotAgent } = await import('@/lib/server/visits');
+    const at = new Date('2026-11-12T20:00:00Z'); // 01:30 on 13 Nov in India
+    const s = await withDb(db => { recordVisit(db, at); recordVisit(db, at); recordVisit(db, new Date('2026-11-12T10:00:00Z')); return visitStats(db, at); });
+    eq(s.total, 3); eq(s.today, 2); eq(s.since, '2026-11-12');
+    ok(isBotAgent('Googlebot/2.1') && isBotAgent(null) && !isBotAgent('Mozilla/5.0 (Linux; Android 14) Chrome/130 Mobile'));
+  });
+});

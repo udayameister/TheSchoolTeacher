@@ -22,7 +22,7 @@ export default async function Footer() {
         </div>
         {col(t('footer.candidates'), [{ href: '/jobs', label: t('nav.jobs') }, { href: '/jobs?type=government', label: t('nav.govtNotices') }, { href: '/career', label: t('nav.career') }, { href: '/career/tet', label: t('career.tetTitle') }, { href: '/career/salary', label: t('career.salaryTitle') }, { href: '/register', label: t('nav.register') }])}
         {col(t('footer.schools'), [{ href: '/for-schools', label: t('nav.forSchools') }, { href: '/schools', label: t('school.directoryTitle') }, { href: '/register?role=school', label: t('home.forSchoolsCta') }])}
-        {col(t('footer.legal'), [{ href: '/terms', label: t('footer.terms') }, { href: '/privacy', label: t('footer.privacy') }, { href: '/refund-policy', label: t('footer.refund') }, { href: '/contact', label: t('footer.contact') }])}
+        {col(t('footer.legal'), [{ href: '/terms', label: t('footer.terms') }, { href: '/privacy', label: t('footer.privacy') }, { href: '/refund-policy', label: t('footer.refund') }, { href: '/about', label: t('nav.about') }, { href: '/contact', label: t('footer.contact') }])}
       </div>
       <div className="border-t border-line">
         <div className="container-page flex flex-col gap-1 py-4 text-sm text-ink-muted sm:flex-row sm:justify-between">

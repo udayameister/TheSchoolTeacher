@@ -41,3 +41,16 @@
 }
 
 .sr-only-focusable:not(:focus) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* Scroll-reveal for the home and About pages (components/home/Reveal.tsx). */
+@layer components {
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1); transition-delay: var(--d, 0ms); }
+  .reveal.is-in { opacity: 1; transform: none; }
+  /* Home and About: black headings and text on light maroon. Utility classes (text-white …) still win. */
+  .theme-maroon { color: #1E1719; }
+  .theme-maroon :where(h1, h2, h3) { color: #140D0F; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .animate-float, .animate-float-slow, .animate-drift, .animate-shimmer, .animate-marquee { animation: none !important; }
+}
