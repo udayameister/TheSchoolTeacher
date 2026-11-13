@@ -46,7 +46,7 @@ export default async function ApplicationsPage() {
                       <li key={s} className="min-w-[88px] flex-1" aria-current={a.stage === s ? 'step' : undefined}>
                         <div className={`h-1.5 rounded-full ${done ? 'bg-brand-600' : 'bg-line'}`} />
                         <p className={`mt-1 text-xs ${a.stage === s ? 'font-bold text-brand-900' : done ? 'text-ink' : 'text-ink-muted'}`}>{t(`stages.${s}`)}{done ? <span className="sr-only"> ✓</span> : ''}</p>
-                        {when && <p className="text-[11px] text-ink-muted">{fmt(when)}</p>}
+                        {when && <p className="text-xs text-ink-muted">{fmt(when)}</p>}
                       </li>
                     );
                   })}

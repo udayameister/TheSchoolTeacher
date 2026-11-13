@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Menu } from 'lucide-react';
+import { Menu, UserRound } from 'lucide-react';
 import { Logo } from './Logo';
 import LanguageSwitcher from './LanguageSwitcher';
 import SignOutButton from './SignOutButton';
@@ -19,7 +19,8 @@ export default async function Navbar() {
   const auth = () => user ? (
     <>
       <Link href={homeFor(user.role)} className="btn-primary">{t('nav.myConsole')}</Link>
-      <Link href="/account" className="btn-ghost">{t('nav.account')}</Link>
+      {/* Icon only on narrower desktops so the header fits; the full label from 1536px and in the menu. */}
+      <Link href="/account" className="btn-ghost" aria-label={t('nav.account')} title={t('nav.account')}><UserRound size={20} aria-hidden="true" /><span className="xl:max-2xl:sr-only">{t('nav.account')}</span></Link>
       <SignOutButton label={t('nav.signOut')} />
     </>
   ) : (

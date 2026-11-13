@@ -4,7 +4,7 @@ import { visibleSections } from '@/lib/resume/model';
 /* One A4-like resume page. Works on screen and in print (Save as PDF). */
 
 const STYLE: Record<ResumeTemplate, { wrap: string; name: string; head: string; h2: string; body: string }> = {
-  classic: { wrap: '[font-family:Georgia,serif]', name: 'text-3xl font-bold', head: 'border-b-2 border-ink pb-3 text-center', h2: 'mt-5 border-b border-ink/40 pb-0.5 text-sm font-bold uppercase tracking-wider', body: 'text-[14px] leading-relaxed' },
+  classic: { wrap: '', name: 'text-3xl font-bold', head: 'border-b-2 border-ink pb-3 text-center', h2: 'mt-5 border-b border-ink/40 pb-0.5 text-sm font-bold uppercase tracking-wider', body: 'text-[14px] leading-relaxed' },
   modern: { wrap: '', name: 'text-3xl font-bold text-brand-800', head: 'border-l-4 border-marigold-400 pl-4', h2: 'mt-5 border-b border-brand-200 pb-0.5 text-sm font-bold uppercase tracking-wider text-brand-800', body: 'text-[14px] leading-relaxed' },
   compact: { wrap: '', name: 'text-2xl font-bold', head: 'border-b border-line pb-2', h2: 'mt-3 text-[13px] font-bold uppercase tracking-wide text-ink-soft', body: 'text-[13px] leading-snug' },
 };

@@ -1,7 +1,4 @@
 /* Self-hosted fonts (only the weights and scripts we use, so phones download little). */
-@import '@fontsource/noto-sans/latin-400.css';
-@import '@fontsource/noto-sans/latin-600.css';
-@import '@fontsource/noto-sans/latin-700.css';
 @import '@fontsource/noto-sans-devanagari/devanagari-400.css';
 @import '@fontsource/noto-sans-devanagari/devanagari-600.css';
 @import '@fontsource/noto-sans-devanagari/devanagari-700.css';
@@ -12,7 +9,7 @@
 
 @layer base {
   html { -webkit-text-size-adjust: 100%; }
-  body { @apply bg-ivory text-ink antialiased; }
+  body { @apply bg-ivory text-base text-ink antialiased; }
   h1, h2, h3 { @apply text-brand-900; }
   a { @apply text-brand-700 underline-offset-2; }
   a:hover { @apply underline; }

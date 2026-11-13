@@ -35,8 +35,22 @@ const config: Config = {
         success: { 50: '#ECFDF3', 600: '#15803D', 700: '#166534' },
       },
       fontFamily: {
-        // Noto Sans for Latin + Noto Sans Devanagari for Hindi, self-hosted (no request to Google Fonts).
-        sans: ['"Noto Sans"', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
+        // Plain sans-serif across the site: Arial / Helvetica on every computer and phone, with self-hosted
+        // Noto Sans Devanagari for Hindi (no request to Google Fonts).
+        sans: ['Arial', 'Helvetica', '"Noto Sans Devanagari"', '"Liberation Sans"', 'sans-serif'],
+      },
+      // Every text size is 10% larger than Tailwind's default (size and line height).
+      fontSize: {
+        xs: ['0.825rem', { lineHeight: '1.1rem' }],
+        sm: ['0.9625rem', { lineHeight: '1.375rem' }],
+        base: ['1.1rem', { lineHeight: '1.65rem' }],
+        lg: ['1.2375rem', { lineHeight: '1.925rem' }],
+        xl: ['1.375rem', { lineHeight: '1.925rem' }],
+        '2xl': ['1.65rem', { lineHeight: '2.2rem' }],
+        '3xl': ['2.0625rem', { lineHeight: '2.475rem' }],
+        '4xl': ['2.475rem', { lineHeight: '2.75rem' }],
+        '5xl': ['3.3rem', { lineHeight: '1' }],
+        '6xl': ['4.125rem', { lineHeight: '1' }],
       },
       borderRadius: { xl: '0.875rem' },
       keyframes: {
